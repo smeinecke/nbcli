@@ -74,8 +74,10 @@ def test_info(nbcli_env):
 
 
 def test_create_region_and_site(nbcli_env):
-    _run_nbcli(nbcli_env, "create", "tests/integration/region.yml")
-    _run_nbcli(nbcli_env, "create", "tests/integration/site.yml")
+    """Create test region and site, tolerating re-runs against the same NetBox instance."""
+    for data_file in ("tests/integration/region.yml", "tests/integration/site.yml"):
+        result = _run_nbcli(nbcli_env, "create", data_file, check=False)
+        assert result.returncode == 0 or "already exists" in result.stderr, result.stderr
 
 
 def test_search_and_filter(nbcli_env):
