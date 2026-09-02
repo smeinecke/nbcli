@@ -14,6 +14,7 @@ class NbArgs:
         self.args = list()
         self.kwargs = kwargs or {}
         self.action = action
+        self.failed = False
 
     def __bool__(self):
         """Return False if NbArgs object is 'empty'."""
@@ -62,7 +63,11 @@ class NbArgs:
                 for res in resol.split("~"):
                     nba = NbArgs(self._nb, action=self.action)
                     nba.proc(*args)
-                    nba.resolve(*res.split(":"), kwargs=nba.kwargs)
+                    ret = nba.resolve(*res.split(":"), kwargs=nba.kwargs)
+                    if not ret or not ret[1]:
+                        self.failed = True
+                        self._logger.warning("Could not resolve '%s'", res)
+                        return
                     al += list(nba.kwargs.items())
                 args = al
             for arg in args:
@@ -93,7 +98,14 @@ class NbArgs:
             return replyl
 
         for rep in rep_items:
-            replyl += [(rep[0], getattr(obj, rep[1])) for obj in result]
+            attr = rep[1]
+            if isinstance(attr, str) and attr.startswith("~") and attr.endswith("~"):
+                value = attr.strip("~")
+                for obj in result:
+                    replyl.append((rep[0], value))
+            else:
+                for obj in result:
+                    replyl.append((rep[0], getattr(obj, attr)))
 
         self.proc(*tuple(replyl))
 
@@ -112,6 +124,9 @@ class NbArgs:
             nba.update(res.lookup, arg)
 
         result = list(ep.filter(**nba.kwargs))
+
+        if not result:
+            self.failed = True
 
         self.apply_res(result, res)
 

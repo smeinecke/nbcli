@@ -1,11 +1,13 @@
 """Search sub command to emulate Netbox main search bar."""
 
+import json
 from concurrent.futures import ThreadPoolExecutor
 
 from nbcli.commands.base import BaseSubCommand
 from nbcli.core.utils import app_model_by_loc, rs_limit
 from nbcli.views.tools import nbprint
 from pynetbox.core.query import RequestError
+from pynetbox.core.response import Record
 
 
 class SearchSubCommand(BaseSubCommand):
@@ -24,8 +26,12 @@ class SearchSubCommand(BaseSubCommand):
 
         self.parser.add_argument("searchterm", help="Search term")
 
+        self.parser.add_argument(
+            "--json", action="store_true", help="Display results as json string."
+        )
+
     def run(self):
-        """Run a search of Netbox objects and show a table view of results.
+        """Run a search of Netbox objects and show a table or json view of results.
 
         Usage Examples:
 
@@ -34,6 +40,12 @@ class SearchSubCommand(BaseSubCommand):
 
         - Search the interface object type for 'eth 1':
           $ nbcli search interface 'eth 1'
+
+        - Search for 'server1' and return json for agent consumption:
+          $ nbcli search server1 --json
+
+        - Search only devices for 'server1' and return json:
+          $ nbcli search device server1 --json
         """
         if hasattr(self.netbox.nbcli.conf, "nbcli") and (
             "search_objects" in self.netbox.nbcli.conf.nbcli.keys()
@@ -75,23 +87,27 @@ class SearchSubCommand(BaseSubCommand):
 
         if self.netbox.threading:
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                self.results = executor.map(self.search_model, modellist)
+                self.results = list(executor.map(self.search_model, modellist))
         else:
             for obj_type in modellist:
                 self.results.append(self.search_model(obj_type))
 
-        self.results = [r for r in self.results if r != ""]
+        self.results = [r for r in self.results if r["records"]]
+
+        if self.args.json:
+            print(self.json_output())
+            return
 
         if self.result_count == 0:
             self.logger.warning("No results found")
         else:
             print("")
             for result in self.results:
-                print(f"{result}\n")
+                print(f"{result['result_str']}\n")
 
     def search_model(self, obj_type):
         """Search for given model for search term."""
-        result_str = ""
+        result_data = {"obj_type": obj_type, "records": list(), "result_str": ""}
 
         try:
             model = app_model_by_loc(self.netbox, obj_type)
@@ -99,14 +115,37 @@ class SearchSubCommand(BaseSubCommand):
             full_count = model.count(self.args.searchterm)
             if len(result) > 0:
                 self.result_count += 1
-                result_str += f"{obj_type.title()}\n{'=' * len(obj_type)}\n"
-                result_str += self.nbprint(result, string=True)
-                if len(result) < full_count:
-                    result_str += f"\n*** See all {full_count} results: "
-                    result_str += f"'$nbcli filter {obj_type} {self.args.searchterm} --dl' ***"
+                records = list(result)
+                result_data["records"] = records
+                result_data["result_str"] += f"{obj_type.title()}\n{'=' * len(obj_type)}\n"
+                result_data["result_str"] += self.nbprint(records, string=True)
+                if len(records) < full_count:
+                    result_data["result_str"] += (
+                        f"\n*** See all {full_count} results: "
+                        f"'$nbcli filter {obj_type} {self.args.searchterm} --dl' ***"
+                    )
 
         except (RequestError, AssertionError) as err:
             self.logger.warning('No API endpoint found for "%s".', obj_type)
             self.logger.warning(err)
 
-        return result_str
+        return result_data
+
+    def json_output(self):
+        """Build a json string from all search results."""
+
+        def build(data):
+            if isinstance(data, Record):
+                data = dict(data)
+            elif isinstance(data, list):
+                data = [build(d) for d in data]
+            return data
+
+        all_records = list()
+        for result in self.results:
+            for record in result["records"]:
+                record_data = build(record)
+                record_data["_nbcli_type"] = result["obj_type"]
+                all_records.append(record_data)
+
+        return json.dumps(all_records)

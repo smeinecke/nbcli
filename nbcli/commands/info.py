@@ -72,7 +72,7 @@ class InfoSubCommand(BaseSubCommand):
                     print(disp)
 
                 else:
-                    self.logger.warning("Unsupported model: '%s'", self.args.model)
+                    self.logger.warning("Unsupported model: '%s'", self.args.models)
 
         else:
             print(

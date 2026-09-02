@@ -33,13 +33,18 @@ class Filter:
         else:
             nba.proc(*args)
             logger.debug(str(nba))
+            if nba.failed:
+                if count:
+                    self.result = 0
+                else:
+                    self.result = []
+                return
             full_count = self.model.count(*nba.args, **nba.kwargs)
 
         filter_limit = netbox.nbcli.conf.nbcli.get("filter_limit", 50)
 
         if filter_limit <= 0:
             filter_limit = 0
-            list_all = True
 
         if list_all:
             result = self.model.all()
@@ -58,7 +63,13 @@ class Filter:
                 api_url += "&"
             logger.info(api_url)
 
-            if not dl and (full_count > filter_limit):
+            if (
+                not dl
+                and not list_all
+                and not count
+                and (filter_limit > 0)
+                and (full_count > filter_limit)
+            ):
                 result = rs_limit(result, filter_limit)
                 logger.warning(f"Returning {filter_limit} of {full_count} results.")
                 logger.warning(f'use "--dl" to return all {full_count} results.')
@@ -123,7 +134,7 @@ class Filter:
                 if obj.update(nba.kwargs):
                     udlist.append("{} Updated!".format(objrep))
                 else:
-                    udlist.append("Error updating {}".format(objrep))
+                    udlist.append("{} no changes to apply.".format(objrep))
             self.result = "\n".join(udlist)
         else:
             self.result = "Aborting!"

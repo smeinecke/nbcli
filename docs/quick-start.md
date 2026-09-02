@@ -89,6 +89,13 @@ IP Address   Vrf  Status  Role  Tenant  Parent  Interface  DNS Name             
 
 ```
 
+You can also return search results as machine-readable JSON with the `--json`
+flag, which is useful for agents and automation:
+
+```
+$ nbcli search compute --json
+```
+
 ## Filter
 
 Filter specified Netbox object type with searchterm, keyword arguments, or auto-resolve arguments

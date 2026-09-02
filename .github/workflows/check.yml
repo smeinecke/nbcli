@@ -1,0 +1,72 @@
+name: Python Code Checks
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test:
+    name: Unit Tests & Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Run Ruff (PEP 8 Formatting)
+        run: |
+          uv run make format
+
+      - name: Run Ruff (Linting)
+        run: |
+          uv run make check
+
+      - name: Run radon (Cyclomatic Complexity)
+        run: |
+          uv run make complexity
+
+      - name: Run xenon (Maintainability Gate)
+        run: |
+          uv run make xenon
+
+      - name: Run vulture (Dead Code)
+        run: |
+          uv run make vulture
+
+      - name: Run bandit (Security)
+        run: |
+          uv run make bandit
+
+      - name: Run pyright (Type Checking)
+        run: |
+          uv run make pyright
+
+      - name: Run pytest (Unit Tests)
+        run: |
+          uv run make test
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true

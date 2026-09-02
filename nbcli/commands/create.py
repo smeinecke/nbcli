@@ -72,7 +72,11 @@ class Upsert:
             else:
                 self.obj = None
                 self.args = NbArgs(self.netbox, action="post")
-                self.args.proc(*nba.kwargs.items())
+                if self.res.lookup in nba.kwargs:
+                    lookup_value = nba.kwargs[self.res.lookup]
+                    if isinstance(lookup_value, list):
+                        lookup_value = lookup_value[-1]
+                    self.args.update(self.res.lookup, lookup_value)
         else:
             self.args = NbArgs(self.netbox, action="post")
 

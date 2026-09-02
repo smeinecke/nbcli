@@ -66,8 +66,8 @@ git clone https://github.com/netbox-community/netbox-docker.git && \
 !!! info "service usually take ~1 min to come up"
 
 ```bash
-docker-compose pull && \
-    docker-compose up -d
+docker compose pull && \
+    docker compose up -d netbox
 ```
 
 !!! done "The test Netbox instance should now be ready for testing!"
@@ -77,6 +77,6 @@ docker-compose pull && \
 Bring down test Netbox service and deactivate virtual environment.
 
 ```bash
-docker-compose down -v && \
+docker compose down -v && \
     deactivate
 ```

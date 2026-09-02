@@ -1,0 +1,62 @@
+name: Integration Test
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  integration-test:
+    name: NetBox Integration Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Start NetBox Docker
+        run: |
+          git clone --depth 1 https://github.com/netbox-community/netbox-docker.git
+          cp tests/docker-compose.override.yml netbox-docker/
+          cd netbox-docker
+          docker compose pull
+          docker compose up -d netbox
+
+      - name: Run integration tests
+        run: |
+          uv run pytest tests/integration -v --tb=short
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-logs
+          path: |
+            /tmp/nbcli-integration-*.log
+          retention-days: 3
+
+      - name: Stop NetBox Docker
+        if: always()
+        run: |
+          cd netbox-docker
+          docker compose down -v

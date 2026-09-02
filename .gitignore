@@ -1,6 +1,13 @@
 __pycache__
+.venv
 venv
 *egg-info
+.pytest_cache
+.ruff_cache
+.coverage
+coverage.xml
 netbox-docker
 .nbcli_testing/
 site/
+dist/
+build/

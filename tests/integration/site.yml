@@ -1,0 +1,6 @@
+---
+site:
+- name: IntegrationSite
+  slug: integration-site
+  region: IntegrationRegion
+  status: active

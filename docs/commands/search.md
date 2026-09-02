@@ -2,7 +2,7 @@
 
 ```
 $ nbcli search -h
-usage: nbcli search [-h] [-v] [-q] [obj_type] searchterm
+usage: nbcli search [-h] [-v] [-q] [--json] [obj_type] searchterm
 
 Search Netbox objects with the given searchterm.
 
@@ -17,8 +17,9 @@ optional arguments:
   -h, --help     show this help message and exit
   -v, --verbose  Show more logging messages
   -q, --quiet    Show fewer logging messages
+  --json         Display results as json string.
 
-Run a search of Netbox objects and show a table view of results.
+Run a search of Netbox objects and show a table view or json view of results.
 
 Usage Examples:
 
@@ -27,6 +28,12 @@ Usage Examples:
 
 - Search the interface object type for 'eth 1':
   $ nbcli search interface 'eth 1'
+
+- Search all object types for 'server1' and return JSON for agents:
+  $ nbcli search server1 --json
+
+- Search only devices for 'server1' and return JSON:
+  $ nbcli search device server1 --json
 ```
 
 The `search` command is designed to emulate the main search bar that can be found
@@ -84,10 +91,38 @@ nbcli:
 #    - virtual_machine
 ```
 
+## JSON output
+
+The `--json` flag returns a machine-readable JSON array of all matching records.
+This is useful for agents, shell scripts, or any automation that needs to parse
+search results.
+
+Each record in the JSON output is a NetBox object with an extra `_nbcli_type`
+field that identifies which object type the record belongs to. This makes it easy
+to tell mixed search results apart.
+
+```bash
+$ nbcli search dmi01 --json | python3 -m json.tool
+[
+  {
+    "_nbcli_type": "device",
+    "id": 1,
+    "name": "dmi01-akron-pdu01",
+    "...": "..."
+  },
+  {
+    "_nbcli_type": "device",
+    "id": 2,
+    "name": "dmi01-akron-rtr01",
+    "...": "..."
+  }
+]
+```
+
 !!! info
     `nbcli search` relies on the `q` parameter being available for the GET
     method on the REST API endpoint. Make sure any object added to the
     `search_objects` list has the `q` parameter available for the GET method.
 
-    Your Netbox instance API docs should be available at 
+    Your Netbox instance API docs should be available at
     https://your.netbox.url/api/docs

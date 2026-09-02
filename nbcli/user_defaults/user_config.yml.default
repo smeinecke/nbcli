@@ -1,6 +1,6 @@
 pynetbox:
   url: http://localhost:8080
-  token: 0123456789abcdef0123456789abcdef01234567
+  token: nbt_test.0123456789abcdef0123456789abcdef01234567
 #  private_key_file: null
 #  private_key: null
 #  threading: false

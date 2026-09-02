@@ -12,7 +12,7 @@ authors = [
 description = "CLI for netbox using pynetbox module"
 readme = "README.md"
 license = {text = "GPLv3"}
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
@@ -45,12 +45,47 @@ nbcli = "nbcli.cli:main"
 "Bug Tracker" = "https://codeberg.org/nbcli/nbcli/issues"
 
 
-[tool.black]
+[dependency-groups]
+dev = [
+  "bandit[toml]>=1.9.4",
+  "pyright>=1.1.411",
+  "pytest>=9.1.1",
+  "pytest-asyncio>=1.4.0",
+  "pytest-cov>=6.0.0",
+  "ruff>=0.16.3",
+  "vulture>=2.14",
+  "xenon>=0.9.3",
+]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+
+[tool.pyright]
+exclude = ["**/__pycache__", "**/node_modules", "**/dist", "**/build", "**/venv", "**/.venv", "**/tests", "**/netbox-docker"]
+pythonVersion = "3.12"
+reportMissingImports = "warning"
+typeCheckingMode = "off"
+
+
+[tool.bandit]
+exclude_dirs = [".venv", "tests", "build", "dist"]
+skips = ["B101"]
+
+
+[tool.ruff]
+target-version = "py312"
 line-length = 100
+include = ["nbcli/**/*.py"]
 
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E203"]
 
-[tool.flake8]
-extend-ignore = ["E203"]
-max-line-length = 100
-exclude = ["./.*", "venv", "tests", "netbox-docker"]
-per-file-ignores = ["__init__.py:F401"]
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]

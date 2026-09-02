@@ -1,5 +1,12 @@
-version: '3.4'
 services:
   netbox:
     ports:
     - 8080:8080
+    environment:
+      SUPERUSER_NAME: admin
+      SUPERUSER_EMAIL: admin@example.com
+      SUPERUSER_PASSWORD: admin
+      SUPERUSER_API_TOKEN: 0123456789abcdef0123456789abcdef01234567
+      SUPERUSER_API_KEY: test
+      SKIP_SUPERUSER: "false"
+      LOGIN_REQUIRED: "false"
