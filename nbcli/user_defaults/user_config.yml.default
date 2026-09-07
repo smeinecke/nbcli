@@ -36,4 +36,12 @@ nbcli:
 #    - cluster
 #    - virtual_machine
 
+  # Enable support for NetBox plugins.
+  # Adds the plugin's object types to 'nbcli search' results and enables
+  # them for 'nbcli create', 'nbcli filter', 'nbcli info' and 'nbcli shell'.
+  # Currently supported:
+  #   netbox_dns - https://github.com/sys4/netbox-plugin-dns
+#  plugins:
+#    - netbox_dns
+
 user:

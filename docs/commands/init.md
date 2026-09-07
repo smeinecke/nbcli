@@ -43,7 +43,7 @@ at minimum **url** and **token** need to be set.
 ```yaml
 pynetbox:
   url: http://localhost:8080
-  token: 0123456789abcdef0123456789abcdef01234567
+  token: nbt_test.0123456789abcdef0123456789abcdef01234567
 ```
 
 Values defined under requests will be used to create a
@@ -54,4 +54,24 @@ If you need to disable SSL verification, add (*or uncomment*) the following to y
 ```yaml
 requests:
   verify: false
+```
+
+Values defined under nbcli change the behavior of nbcli itself.
+
+```yaml
+nbcli:
+
+  # Limit results returned from filter and search commands. Set to 0 to disable.
+  filter_limit: 50
+
+  # Number of workers if threading is enabled
+  max_workers: 10
+
+  # Enable support for NetBox plugins.
+  # Adds the plugin's object types to 'nbcli search' results and enables
+  # them for 'nbcli create', 'nbcli filter', 'nbcli info' and 'nbcli shell'.
+  # Currently supported:
+  #   netbox_dns - https://github.com/sys4/netbox-plugin-dns
+  plugins:
+    - netbox_dns
 ```

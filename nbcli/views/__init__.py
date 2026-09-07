@@ -23,3 +23,14 @@ from nbcli.views.ipam import IpamVlansView
 
 from nbcli.views.tenancy import TenancyTenantGroupsView
 from nbcli.views.tenancy import TenancyTenantsView
+
+from nbcli.views.plugins import PluginsNetboxDnsNameserversView
+from nbcli.views.plugins import PluginsNetboxDnsViewsView
+from nbcli.views.plugins import PluginsNetboxDnsZonesView
+from nbcli.views.plugins import PluginsNetboxDnsRecordsView
+from nbcli.views.plugins import PluginsNetboxDnsRegistrarsView
+from nbcli.views.plugins import PluginsNetboxDnsContactsView
+from nbcli.views.plugins import PluginsNetboxDnsZonetemplatesView
+from nbcli.views.plugins import PluginsNetboxDnsRecordtemplatesView
+from nbcli.views.plugins import PluginsNetboxDnsDnsseckeytemplatesView
+from nbcli.views.plugins import PluginsNetboxDnsDnssecpoliciesView

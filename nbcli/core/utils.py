@@ -160,7 +160,9 @@ def app_model_loc(obj):
     else:
         url = obj.endpoint.url
     parts = url.replace(obj.api.base_url, "").strip("/").split("/")
-    return ".".join(parts[:2]).replace("-", "_")
+    # plugin endpoints live under 'plugins/<plugin>/<endpoint>'
+    end = 3 if parts[0] == "plugins" else 2
+    return ".".join(parts[:end]).replace("-", "_")
 
 
 def app_model_by_loc(api, loc):
@@ -171,10 +173,11 @@ def app_model_by_loc(api, loc):
     if res:
         loc = res.model
     app_ep = loc.split(".")
-    assert len(app_ep) == 2, "Endpoint must be in format '{APP}.{ENDPOINT}'."
-    app = getattr(api, app_ep[0])
-    ep = getattr(app, app_ep[1])
-    return ep
+    assert len(app_ep) >= 2, "Endpoint must be in format '{APP}.{ENDPOINT}'."
+    obj = api
+    for part in app_ep:
+        obj = getattr(obj, part)
+    return obj
 
 
 def is_list_of_records(result):

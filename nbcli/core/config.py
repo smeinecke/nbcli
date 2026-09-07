@@ -123,6 +123,21 @@ def get_session(init=False):
 
     resstr = (files("nbcli.core") / "resolve_reference.yml").read_text()
     resdict = yaml.safe_load(resstr)
+
+    # load resolve definitions for enabled NetBox plugins
+    nbcli_conf = getattr(conf, "nbcli", {}) or {}
+    plugins = nbcli_conf.get("plugins") or []
+    if isinstance(plugins, str):
+        plugins = [plugins]
+
+    for plugin in plugins:
+        try:
+            plugstr = (files("nbcli.core") / "resolve_reference_{}.yml".format(plugin)).read_text()
+        except FileNotFoundError:
+            logger.warning("No resolve definitions found for plugin '%s'", plugin)
+            continue
+        resdict.update(yaml.safe_load(plugstr) or {})
+
     nb.nbcli.rm = ResMgr(**resdict)
 
     nb.nbcli.logger = logger

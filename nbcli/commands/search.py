@@ -83,6 +83,12 @@ class SearchSubCommand(BaseSubCommand):
                 "virtual_machine",
             ]
 
+        # append models from NetBox plugins enabled via 'nbcli.plugins' config
+        self.search_objects = list(self.search_objects)
+        for res in self.netbox.nbcli.rm:
+            if (res.model.startswith("plugins.")) and (res.alias not in self.search_objects):
+                self.search_objects.append(res.alias)
+
         self.nbprint = nbprint
 
         self.search_limit = self.args.limit

@@ -98,6 +98,35 @@ nbcli:
 #    - virtual_machine
 ```
 
+## Plugin objects
+
+Object types provided by NetBox plugins can be added by enabling the plugin in
+the `user_config.yml` file.
+
+```yaml
+nbcli:
+  plugins:
+    - netbox_dns
+```
+
+Enabling a plugin adds its object types to the list of objects that are
+searched by default, and makes them available to the `search`, `filter`,
+`create`, `info`, and `shell` commands.
+
+Currently supported plugins:
+
+- `netbox_dns` - [netbox-plugin-dns](https://github.com/sys4/netbox-plugin-dns)
+  adds `nameserver`, `view`, `zone`, `record`, `registrar`, `contact`,
+  `zone_template`, `record_template`, `dnssec_key_template`, and
+  `dnssec_policy` object types.
+
+```
+$ nbcli search record 'www'
+```
+
+The plugin must be installed and enabled on the NetBox instance for its object
+types to return results.
+
 ## JSON output
 
 The `--json` flag returns a machine-readable JSON array of all matching records.

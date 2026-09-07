@@ -1,0 +1,59 @@
+# Resolve reference definitions for the 'netbox_dns' NetBox plugin
+# (netbox-plugin-dns - https://github.com/sys4/netbox-plugin-dns)
+#
+# Enabled by adding 'netbox_dns' to the 'nbcli.plugins' list in
+# user_config.yml:
+#
+# nbcli:
+#   plugins:
+#     - netbox_dns
+
+plugins.netbox_dns.nameservers:
+
+plugins.netbox_dns.views:
+
+plugins.netbox_dns.registrars:
+
+plugins.netbox_dns.contacts:
+  alias: contact
+  lookup: contact_id
+
+plugins.netbox_dns.zones:
+  plugins.netbox_dns.nameservers:
+  - alias: soa_mname
+  plugins.netbox_dns.contacts:
+  - alias: registrant
+    lookup: contact_id
+  - alias: admin_c
+    lookup: contact_id
+  - alias: tech_c
+    lookup: contact_id
+  - alias: billing_c
+    lookup: contact_id
+  plugins.netbox_dns.zones:
+    alias: rfc2317_parent_zone
+
+plugins.netbox_dns.records:
+
+plugins.netbox_dns.zonetemplates:
+  alias: zone_template
+  plugins.netbox_dns.nameservers:
+  - alias: soa_mname
+  plugins.netbox_dns.contacts:
+  - alias: registrant
+    lookup: contact_id
+  - alias: admin_c
+    lookup: contact_id
+  - alias: tech_c
+    lookup: contact_id
+  - alias: billing_c
+    lookup: contact_id
+
+plugins.netbox_dns.recordtemplates:
+  alias: record_template
+
+plugins.netbox_dns.dnsseckeytemplates:
+  alias: dnssec_key_template
+
+plugins.netbox_dns.dnssecpolicies:
+  alias: dnssec_policy
