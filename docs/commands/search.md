@@ -2,7 +2,7 @@
 
 ```
 $ nbcli search -h
-usage: nbcli search [-h] [-v] [-q] [--json] [obj_type] searchterm
+usage: nbcli search [-h] [-v] [-q] [--json] [--limit LIMIT] [obj_type] searchterm
 
 Search Netbox objects with the given searchterm.
 
@@ -18,6 +18,7 @@ optional arguments:
   -v, --verbose  Show more logging messages
   -q, --quiet    Show fewer logging messages
   --json         Display results as json string.
+  --limit LIMIT  Limit number of results per object type (overrides 'nbcli.filter_limit').
 
 Run a search of Netbox objects and show a table view or json view of results.
 
@@ -34,14 +35,20 @@ Usage Examples:
 
 - Search only devices for 'server1' and return JSON:
   $ nbcli search device server1 --json
+
+- Search all object types for 'server1' and return up to 5 results per type:
+  $ nbcli search server1 --limit 5
 ```
 
 The `search` command is designed to emulate the main search bar that can be found
 at the top of the home page of the Netbox web interface.
 
 By default it will search through a predefined list of object types and return
-up to 15 results for each object type. If more then 15 results are found, it
-will display the filter command to show all the results.
+up to `filter_limit` (default `50`) results for each object type. If more than
+that many results are found, it will display the filter command to show all the
+results. The `--limit` option can be used to override the `filter_limit` value
+from `user_config.yml` for a single search. Use `--limit 0` to return all
+results.
 
 If your search term needs to contain a space, make sure to wrap it in quotes.
 

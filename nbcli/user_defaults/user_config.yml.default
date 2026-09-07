@@ -10,7 +10,7 @@ requests:
 
 nbcli:
 
-  # Limit results returned from filter command. Set to 0 to disable.
+  # Limit results returned from filter and search commands. Set to 0 to disable.
   filter_limit: 50
 
   # Number of working if threading is enabled

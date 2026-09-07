@@ -16,7 +16,7 @@ At the very minimum, you need to specify a url and token in the user_config.yml 
 ```yaml
 pynetbox:
   url: http://localhost:8080
-  token: 0123456789abcdef0123456789abcdef01234567
+  token: nbt_test.0123456789abcdef0123456789abcdef01234567
 ```
 
 If you need to disable SSL verification, add (or uncomment) the following to your user_config.yml file. 

@@ -55,25 +55,24 @@ class BaseSubCommand:
 
     def __init__(self, subparser):
         """Add sub-command parser to subparser object."""
-        if "parents" in self.parser_kwargs.keys():
-            assert isinstance(self.parser_kwargs["parents"], list)
-            self.parser_kwargs["parents"].append(get_common_parser())
-        else:
-            self.parser_kwargs["parents"] = [get_common_parser()]
+        parser_kwargs = dict(self.parser_kwargs)
+        parents = list(parser_kwargs.get("parents", []))
+        parents.append(get_common_parser())
 
         if self.view_options:
-            self.parser_kwargs["parents"].append(get_view_parser())
+            parents.append(get_view_parser())
+        parser_kwargs["parents"] = parents
 
         self.name = self.name.lower()
 
-        if "formatter_class" not in self.parser_kwargs.keys():
-            self.parser_kwargs["formatter_class"] = RawTextHelpFormatter
+        if "formatter_class" not in parser_kwargs.keys():
+            parser_kwargs["formatter_class"] = RawTextHelpFormatter
 
-        if "description" not in self.parser_kwargs.keys():
-            self.parser_kwargs["description"] = dedent(getdoc(self))
+        if "description" not in parser_kwargs.keys():
+            parser_kwargs["description"] = dedent(getdoc(self))
 
-        if "epilog" not in self.parser_kwargs.keys():
-            self.parser_kwargs["epilog"] = dedent(getdoc(self.run))
+        if "epilog" not in parser_kwargs.keys():
+            parser_kwargs["epilog"] = dedent(getdoc(self.run))
 
         # try to resolve conflicting sub_command names
         if self.name in dict(subparser._get_kwargs())["choices"].keys():
@@ -83,7 +82,7 @@ class BaseSubCommand:
                 prefix = self.__module__.split(".")[0].replace("nbcli_", "")
                 self.name = "{}_{}".format(prefix, self.name)
 
-        self.parser = subparser.add_parser(self.name, **self.parser_kwargs)
+        self.parser = subparser.add_parser(self.name, **parser_kwargs)
         self.parser.set_defaults(func=self._pre_run_)
         self.setup()
 

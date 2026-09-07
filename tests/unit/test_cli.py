@@ -22,3 +22,16 @@ def test_search_subcommand_has_json_flag():
         for option in action.option_strings
     ]
     assert "--json" in option_strings
+
+
+def test_search_subcommand_has_limit_option():
+    """The search subcommand parser should accept --limit."""
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    command = SearchSubCommand(subparsers)
+    option_strings = [
+        option
+        for action in command.parser._actions
+        for option in action.option_strings
+    ]
+    assert "--limit" in option_strings

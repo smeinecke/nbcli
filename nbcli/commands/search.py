@@ -30,6 +30,13 @@ class SearchSubCommand(BaseSubCommand):
             "--json", action="store_true", help="Display results as json string."
         )
 
+        self.parser.add_argument(
+            "--limit",
+            type=int,
+            metavar="LIMIT",
+            help="Limit number of results per object type (overrides 'nbcli.filter_limit').",
+        )
+
     def run(self):
         """Run a search of Netbox objects and show a table or json view of results.
 
@@ -46,6 +53,9 @@ class SearchSubCommand(BaseSubCommand):
 
         - Search only devices for 'server1' and return json:
           $ nbcli search device server1 --json
+
+        - Search all object types for 'server1' and return up to 5 results per type:
+          $ nbcli search server1 --limit 5
         """
         if hasattr(self.netbox.nbcli.conf, "nbcli") and (
             "search_objects" in self.netbox.nbcli.conf.nbcli.keys()
@@ -74,6 +84,11 @@ class SearchSubCommand(BaseSubCommand):
             ]
 
         self.nbprint = nbprint
+
+        self.search_limit = self.args.limit
+        if self.search_limit is None:
+            self.search_limit = self.netbox.nbcli.conf.nbcli.get("filter_limit", 15)
+        self.search_limit = int(self.search_limit)
 
         if self.args.obj_type:
             modellist = [self.args.obj_type]
@@ -111,7 +126,10 @@ class SearchSubCommand(BaseSubCommand):
 
         try:
             model = app_model_by_loc(self.netbox, obj_type)
-            result = rs_limit(model.filter(self.args.searchterm), 15)
+            if self.search_limit <= 0:
+                result = list(model.filter(self.args.searchterm))
+            else:
+                result = rs_limit(model.filter(self.args.searchterm), self.search_limit)
             full_count = model.count(self.args.searchterm)
             if len(result) > 0:
                 self.result_count += 1
