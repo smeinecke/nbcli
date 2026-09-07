@@ -1,7 +1,10 @@
 """Tests for NetBox plugin support (e.g. netbox_dns)."""
 
+import argparse
+import logging
 import os
 
+from nbcli.commands.search import SearchSubCommand
 from nbcli.core.config import get_session
 from nbcli.core.utils import app_model_by_loc
 from nbcli.views.tools import view_name
@@ -78,3 +81,34 @@ def test_unknown_plugin_warns_and_continues(tmp_path, monkeypatch, caplog):
     nb = _session(tmp_path, monkeypatch, config)
     assert nb.nbcli.rm.get("record") is None
     assert "no_such_plugin" in caplog.text
+
+
+def test_search_only_uses_safe_plugin_models(tmp_path, monkeypatch):
+    """Default search should only include plugin aliases with safe q= filters."""
+    nb = _session(tmp_path, monkeypatch, CONFIG_DNS)
+
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    command = SearchSubCommand(subparsers)
+    command.args = command.parser.parse_args(["pg-dev.k8s.ane.energy"])
+    command.netbox = nb
+    command.logger = logging.getLogger("test")
+    searched = []
+
+    def fake_search_model(obj_type):
+        searched.append(obj_type)
+        return {"obj_type": obj_type, "records": [], "result_str": ""}
+
+    command.search_model = fake_search_model
+    command.run()
+
+    assert "record" in searched
+    assert "zone" in searched
+    assert "nameserver" in searched
+    assert "view" in searched
+    assert "contact" in searched
+    assert "registrar" not in searched
+    assert "zone_template" not in searched
+    assert "record_template" not in searched
+    assert "dnssec_policy" not in searched
+    assert "dnssec_key_template" not in searched

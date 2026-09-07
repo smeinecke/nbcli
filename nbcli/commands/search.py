@@ -9,6 +9,13 @@ from nbcli.views.tools import nbprint
 from pynetbox.core.query import RequestError
 from pynetbox.core.response import Record
 
+# Plugin model aliases considered safe to search by default with an arbitrary
+# string. Some plugin filtersets 500 when q= is passed to non-string or
+# non-existent fields (e.g. registrar iana_id, zone_template registry_domain_id).
+SAFE_PLUGIN_SEARCH_ALIASES = {
+    "plugins.netbox_dns": ["nameserver", "view", "zone", "record", "contact"],
+}
+
 
 class SearchSubCommand(BaseSubCommand):
     """Search Netbox objects with the given searchterm.
@@ -83,11 +90,15 @@ class SearchSubCommand(BaseSubCommand):
                 "virtual_machine",
             ]
 
-        # append models from NetBox plugins enabled via 'nbcli.plugins' config
+        # append safe models from NetBox plugins enabled via 'nbcli.plugins' config
         self.search_objects = list(self.search_objects)
         for res in self.netbox.nbcli.rm:
-            if (res.model.startswith("plugins.")) and (res.alias not in self.search_objects):
-                self.search_objects.append(res.alias)
+            if res.model.startswith("plugins."):
+                plugin = ".".join(res.model.split(".")[:2])
+                if res.alias in SAFE_PLUGIN_SEARCH_ALIASES.get(plugin, []) and (
+                    res.alias not in self.search_objects
+                ):
+                    self.search_objects.append(res.alias)
 
         self.nbprint = nbprint
 
@@ -149,9 +160,14 @@ class SearchSubCommand(BaseSubCommand):
                         f"'$nbcli filter {obj_type} {self.args.searchterm} --dl' ***"
                     )
 
-        except (RequestError, AssertionError) as err:
+        except AssertionError as err:
             self.logger.warning('No API endpoint found for "%s".', obj_type)
             self.logger.warning(err)
+        except RequestError as err:
+            if err.req.status_code == 404:
+                self.logger.warning('No API endpoint found for "%s".', obj_type)
+            else:
+                self.logger.warning('Error searching "%s": %s', obj_type, err)
 
         return result_data
 
