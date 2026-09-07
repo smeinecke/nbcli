@@ -120,6 +120,12 @@ Currently supported plugins:
   `zone_template`, `record_template`, `dnssec_key_template`, and
   `dnssec_policy` object types.
 
+By default, only the object types whose global search filters handle arbitrary
+strings safely are added to `nbcli search`. For `netbox_dns` this is
+`nameserver`, `view`, `zone`, `record`, and `contact`. All plugin object types
+are still available through `nbcli filter`, `nbcli create`, `nbcli info`, and
+`nbcli shell`, and they can be added to `search_objects` if desired.
+
 ```
 $ nbcli search record 'www'
 ```
