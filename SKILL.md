@@ -37,6 +37,82 @@ Use these as quick reference, but verify exact options in the docs and `--help` 
 - `nbcli create <file.yml>` - create/update NetBox objects from YAML; nested objects and aliases are resolved using `nbcli/core/resolve_reference.yml`.
 - `nbcli shell [script] [-c cmd] [-s {python,ipython}] [-i]` - interactive shell preloaded with `Netbox`, `nbprint`, `nblogger`, and endpoint objects.
 
+## NetBox DNS plugin support (netbox_dns)
+
+nbcli supports the `netbox-plugin-dns` plugin. Enable it in `~/.nbcli/user_config.yml`:
+
+```yaml
+nbcli:
+  plugins:
+    - netbox_dns
+```
+
+This registers the DNS object types (`nameserver`, `view`, `zone`, `record`, `registrar`, `contact`, `zone_template`, `record_template`, `dnssec_key_template`, `dnssec_policy`) for `search`, `filter`, `create`, `info`, and `shell`. By default `nbcli search` only includes `nameserver`, `view`, `zone`, `record`, and `contact` because other plugin endpoints can return 500 errors for arbitrary `q=` searches (e.g. `registrar` `iana_id`, `zone_template` `registry_domain_id`).
+
+### Create a DNS record
+
+Create or append to a YAML file and run `nbcli create records.yml`:
+
+```yaml
+---
+record:
+- name: pg-dev
+  zone: k8s.ane.energy
+  type: CNAME
+  value: pgbouncer-k8s-dev
+  ttl: 3600
+  status: active
+```
+
+`zone: k8s.ane.energy` is resolved to the matching zone ID automatically. For an A record:
+
+```yaml
+record:
+- name: www
+  zone: example.com
+  type: A
+  value: 192.0.2.1
+  ttl: 3600
+  status: active
+```
+
+### Update a DNS record
+
+Use `nbcli filter` with `--ud` (prompts for confirmation):
+
+```bash
+nbcli filter record name=pg-dev zone=k8s.ane.energy --ud 'value=pgbouncer-k8s-new'
+```
+
+You can also use the `create` upsert form if the record name is unique:
+
+```yaml
+record:pg-dev:
+  value: pgbouncer-k8s-new
+```
+
+### Delete a DNS record
+
+Use `nbcli filter` with `-D` (always prompts for confirmation):
+
+```bash
+nbcli filter record name=pg-dev zone=k8s.ane.energy -D
+```
+
+### Search DNS records
+
+Search across the default DNS object types:
+
+```bash
+nbcli search pg-dev
+```
+
+Search only records:
+
+```bash
+nbcli search record pg-dev
+```
+
 ## Views and output
 
 - Built-in views are in `nbcli/views/`. The default view for a record is derived by `view_name()` in `nbcli/core/utils.py`.
