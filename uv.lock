@@ -318,7 +318,7 @@ wheels = [
 
 [[package]]
 name = "nbcli"
-version = "0.10.0.dev2"
+version = "0.11.0"
 source = { editable = "." }
 dependencies = [
     { name = "pynetbox" },
