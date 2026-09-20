@@ -22,9 +22,11 @@ class Filter:
         delete=False,
         ud=list(),
         de=list(),
+        yes=False,
     ):
         """Initialize Filter object."""
         self.model = app_model_by_loc(netbox, model)
+        self.yes = yes
 
         nba = NbArgs(netbox)
 
@@ -99,11 +101,14 @@ class Filter:
         anslist = list()
         for obj in result:
             anslist.append("{} ({})".format(str(obj), str(obj.id)))
-        ans = input(
-            "Delete {}?\n* {}\n(yes) to delete: ".format(
-                obj.__class__.__name__, "\n* ".join(anslist)
+        if self.yes:
+            ans = "yes"
+        else:
+            ans = input(
+                "Delete {}?\n* {}\n(yes) to delete: ".format(
+                    obj.__class__.__name__, "\n* ".join(anslist)
+                )
             )
-        )
         if ans.lower() == "yes":
             dellist = list()
             for obj in result:
@@ -122,11 +127,14 @@ class Filter:
         anslist = list()
         for obj in result:
             anslist.append("{} ({})".format(str(obj), str(obj.id)))
-        ans = input(
-            "Update {} with {}?\n* {}\n(yes) to update: ".format(
-                obj.__class__.__name__, str(nba.kwargs), "\n* ".join(anslist)
+        if self.yes:
+            ans = "yes"
+        else:
+            ans = input(
+                "Update {} with {}?\n* {}\n(yes) to update: ".format(
+                    obj.__class__.__name__, str(nba.kwargs), "\n* ".join(anslist)
+                )
             )
-        )
         if ans.lower() == "yes":
             udlist = list()
             for obj in result:
@@ -201,6 +209,13 @@ class FilterSubCommand(BaseSubCommand):
             help="List results from detail endpoint With optional kwargs. [WIP]",
         )
 
+        self.parser.add_argument(
+            "-y",
+            "--yes",
+            action="store_true",
+            help="Do not prompt for confirmation on delete/update.",
+        )
+
         self.parser.add_argument("--pre", "--stdin-prefix", help="Prefix to add to stdin args.")
 
     def run(self):
@@ -240,6 +255,7 @@ class FilterSubCommand(BaseSubCommand):
             delete=self.args.delete,
             ud=self.args.ud or [],
             de=self.args.de or [],
+            yes=self.args.yes,
         )
 
         if nbfilter.result:

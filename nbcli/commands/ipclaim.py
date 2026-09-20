@@ -150,7 +150,9 @@ class IpClaimSubCommand(BaseSubCommand):
     def _check_dns_record(self):
         """Warn if no netbox-dns record appeared for the claimed FQDN."""
         try:
-            records = list(self.netbox.plugins.netbox_dns.records.filter(fqdn=self.args.fqdn))
+            records = list(
+                self.netbox.plugins.netbox_dns.records.filter(fqdn=self.args.fqdn.rstrip(".") + ".")
+            )
         except (AttributeError, RequestError):
             self.logger.debug("netbox-dns plugin not available, skipping record check")
             return
