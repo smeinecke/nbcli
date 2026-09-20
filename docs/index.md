@@ -14,6 +14,8 @@ using the [pynetbox](https://pynetbox.readthedocs.io/en/latest/) module.
 
 - [Create](commands/create) and update Netbox objects with YAML file
 
+- Find free [IP blocks](commands/ipblocks) and [claim](commands/ipclaim) IP addresses in prefixes
+
 - [Shell](commands/shell) with preloaded pynetbox endpoints
 
 - Custom [Views](extend/views)

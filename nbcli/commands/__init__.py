@@ -8,3 +8,4 @@ from nbcli.commands.filter import FilterSubCommand
 from nbcli.commands.create import CreateSubCommand
 from nbcli.commands.shell import ShellSubCommand
 from nbcli.commands.ipblocks import IpBlocksSubCommand
+from nbcli.commands.ipclaim import IpClaimSubCommand

@@ -14,6 +14,8 @@ nav:
     - search: commands/search.md
     - filter: commands/filter.md
     - create: commands/create.md
+    - ipblocks: commands/ipblocks.md
+    - ipclaim: commands/ipclaim.md
     - shell: commands/shell.md
   - Extend:
     - Views: extend/views.md

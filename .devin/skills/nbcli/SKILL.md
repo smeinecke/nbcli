@@ -51,6 +51,8 @@ Use these as quick reference, but verify exact options in the docs and `--help` 
   - Output controls: `--json`, `--detail`, `--view VIEW`, `--cols COLS ...`, `--nh`, `--dl`.
   - Mutating flags: `-D` (delete), `--ud` (update) - these always prompt for confirmation.
 - `nbcli create <file.yml>` - create/update NetBox objects from YAML; nested objects and aliases are resolved using `nbcli/core/resolve_reference.yml`.
+- `nbcli ipblocks <prefix> [--ongoing N] [--pick N] [--json]` - list free contiguous IP blocks in a prefix; `--pick N` prints the first N free IPs from one contiguous block.
+- `nbcli ipclaim <prefix> <fqdn> [--address IP] [--description TXT] [--status STATUS] [--json]` - claim the next free (or a given) IP in a prefix and set its `dns_name`; with netbox-dns IPAM coupling, managed A/PTR records are created automatically.
 - `nbcli shell [script] [-c cmd] [-s {python,ipython}] [-i]` - interactive shell preloaded with `Netbox`, `nbprint`, `nblogger`, and endpoint objects.
 
 ## NetBox DNS plugin support (netbox_dns)

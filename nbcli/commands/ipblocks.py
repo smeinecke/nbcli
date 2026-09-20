@@ -5,6 +5,7 @@ import json
 
 from pynetbox.core.query import RequestError
 from nbcli.commands.base import BaseSubCommand
+from nbcli.core.ipam import find_free_blocks, resolve_prefix, used_address_ints
 from nbcli.core.utils import rend_table
 
 
@@ -31,6 +32,13 @@ class IpBlocksSubCommand(BaseSubCommand):
         )
 
         self.parser.add_argument(
+            "--pick",
+            type=int,
+            metavar="COUNT",
+            help="Print COUNT free IPs from the first block with enough space.",
+        )
+
+        self.parser.add_argument(
             "--json", action="store_true", help="Display results as json string."
         )
 
@@ -53,6 +61,9 @@ class IpBlocksSubCommand(BaseSubCommand):
         - Find blocks with at least 10 consecutive available IPs:
           $ nbcli ipblocks 192.168.1.0/24 --ongoing 10
 
+        - Print the next 2 free IPs (from one contiguous block):
+          $ nbcli ipblocks 192.168.1.0/24 --pick 2
+
         - Return results as json:
           $ nbcli ipblocks 192.168.1.0/24 --json
         """
@@ -72,41 +83,37 @@ class IpBlocksSubCommand(BaseSubCommand):
             return
 
         try:
-            prefixes = list(self.netbox.ipam.prefixes.filter(prefix=str(network)))
+            nb_prefix = resolve_prefix(self.netbox, network)
         except RequestError as exc:
             self.logger.critical("Error querying NetBox for prefix %s: %s", network, exc)
             return
 
-        if not prefixes:
+        if nb_prefix is None:
             self.logger.warning("Prefix %s not found in NetBox", network)
             return
 
-        nb_prefix = prefixes[0]
         self.logger.info("Found prefix %s (%s)", nb_prefix, nb_prefix.id)
 
         try:
-            addresses = list(self.netbox.ipam.ip_addresses.filter(parent=str(network)))
+            used = used_address_ints(self.netbox, network)
         except RequestError as exc:
             self.logger.critical("Error querying addresses in %s: %s", network, exc)
             return
-
-        used = set()
-        for addr in addresses:
-            try:
-                used.add(int(ipaddress.ip_address(str(addr.address).split("/")[0])))
-            except (ValueError, AttributeError):
-                continue
 
         hosts = list(network.hosts())
         if not hosts:
             self.logger.warning("No usable hosts in %s", network)
             return
 
-        blocks = self._find_blocks(hosts, used)
+        blocks = find_free_blocks(hosts, used)
 
         min_count = self.args.ongoing
         if min_count:
             blocks = [b for b in blocks if b["size"] >= min_count]
+
+        if self.args.pick:
+            self._print_pick(blocks)
+            return
 
         if not blocks:
             self.logger.warning(
@@ -121,35 +128,24 @@ class IpBlocksSubCommand(BaseSubCommand):
         else:
             self._print_table(blocks)
 
-    def _find_blocks(self, hosts, used):
-        """Return contiguous unused blocks as list of dicts."""
-        blocks = []
-        current_start = None
-        current_end = None
+    def _print_pick(self, blocks):
+        """Print the first COUNT free IPs taken from one contiguous block."""
+        count = self.args.pick
+        picked = []
+        for block in blocks:
+            if block["size"] >= count:
+                start = ipaddress.ip_address(block["start"])
+                picked = [str(start + i) for i in range(count)]
+                break
 
-        for host in hosts:
-            if int(host) in used:
-                if current_start is not None:
-                    blocks.append(self._make_block(current_start, current_end))
-                    current_start = None
-                    current_end = None
-            else:
-                if current_start is None:
-                    current_start = host
-                current_end = host
+        if not picked:
+            self.logger.warning("No block with %s consecutive free IPs found", count)
+            return
 
-        if current_start is not None:
-            blocks.append(self._make_block(current_start, current_end))
-
-        return blocks
-
-    def _make_block(self, start, end):
-        """Build a dict describing a contiguous block."""
-        return {
-            "start": str(start),
-            "end": str(end),
-            "size": int(end) - int(start) + 1,
-        }
+        if self.args.json:
+            print(json.dumps(picked))
+        else:
+            print("\n".join(picked))
 
     def _print_table(self, blocks):
         """Print blocks as a formatted table."""
