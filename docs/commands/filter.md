@@ -317,6 +317,16 @@ web-3        1.1   4         -              -                       -
 web-proxy-1  1.1   1         -              -                       -
 ```
 
+Attributes that hold a list or a dict can be indexed with `:N` (list index)
+or `:key` (dict key). Use `.` to keep drilling into the resulting object.
+
+```
+$ nbcli filter device tenant:ENCOM --cols name tags:0 tags:1.name custom_fields:env
+name         tags:0  tags:1.name  custom_fields:env
+chassis-1    core    prod         prod
+compute-1    core    prod         prod
+```
+
 `--cols` should fail gracefully, so if the attribute does not exist, or is
 null, or and empty string the value will be displayed as an `-`
 

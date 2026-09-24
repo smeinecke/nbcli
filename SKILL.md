@@ -119,7 +119,7 @@ nbcli search record pg-dev
 
 - Built-in views are in `nbcli/views/`. The default view for a record is derived by `view_name()` in `nbcli/core/utils.py`.
 - Custom views subclass `BaseView` in `nbcli/views/tools.py` and are auto-loaded from `user_views.py`.
-- `nbprint()` and `Formatter` in `nbcli/views/tools.py` produce table/JSON/detail output. Use `nbprint(result, cols=[...])` to pick columns; attribute paths like `device_type.manufacturer` are supported.
+- `nbprint()` and `Formatter` in `nbcli/views/tools.py` produce table/JSON/detail output. Use `nbprint(result, cols=[...])` to pick columns; attribute paths like `device_type.manufacturer` are supported, plus `tags:0` (list index) and `custom_fields:env` (dict key).
 
 ## Auto-resolution and references
 
