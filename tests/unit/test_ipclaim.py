@@ -168,3 +168,26 @@ def test_ipclaim_network_addresses_not_usable(caplog):
 
         command.netbox.ipam.ip_addresses.create.assert_not_called()
     assert "not a usable host" in caplog.text
+
+
+def test_ipclaim_slash31_all_addresses_usable():
+    """On a /31 link both addresses are usable hosts (RFC 3021)."""
+    for addr in ("192.168.1.0", "192.168.1.1"):
+        command = _command(
+            IpClaimSubCommand, ["192.168.1.0/31", "ptp.example.com", "--address", addr]
+        )
+        command.netbox.ipam.prefixes.filter.return_value = [MagicMock(id=1)]
+        command.netbox.ipam.ip_addresses.filter.side_effect = [[], iter([])]
+        result = MagicMock()
+        result.id = 1
+        result.address = f"{addr}/31"
+        command.netbox.ipam.ip_addresses.create.return_value = result
+
+        command.run()
+
+        command.netbox.ipam.ip_addresses.create.assert_called_once_with(
+            address=f"{addr}/31",
+            dns_name="ptp.example.com",
+            status="active",
+            description="",
+        )

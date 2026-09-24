@@ -179,3 +179,34 @@ def test_caret_still_skips_parent_scoping():
 
     nb.ipam.ip_addresses.filter.assert_called_once_with(address="10.0.9.2/24")
     nb.ipam.ip_addresses.create.assert_called_once_with(address="10.0.9.2/24")
+
+
+def test_null_field_is_literal_data():
+    """'site: null' is literal data - not a reference that filters all sites."""
+    nb = _netbox()
+
+    _upsert(nb, {"device": [{"name": "web-1", "site": None}]})
+
+    nb.dcim.sites.filter.assert_not_called()
+    nb.dcim.devices.create.assert_called_once_with(name="web-1", site=None)
+
+
+def test_run_skips_empty_yaml_documents(tmp_path):
+    """A trailing '---' (empty document) must not crash create."""
+    import argparse
+
+    from nbcli.commands.create import CreateSubCommand
+
+    yml = tmp_path / "create.yml"
+    yml.write_text("region:\n- name: NY\n  slug: ny\n---\n")
+
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    cmd = CreateSubCommand(subparsers)
+    cmd.netbox = _netbox()
+    cmd.logger = _LOGGER
+    cmd.args = parser.parse_args(["create", str(yml)])
+
+    cmd.run()
+
+    cmd.netbox.dcim.regions.create.assert_called_once_with(name="NY", slug="ny")

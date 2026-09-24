@@ -182,7 +182,8 @@ class Formatter:
         # to get threading and max_workers from conf
         nb = self.result[0].api
         self._threading = nb.threading
-        self._max_workers = nb.nbcli.conf.nbcli.get("max_workers", 4)
+        # env var overrides come through auto_cast() as strings
+        self._max_workers = int(nb.nbcli.conf.nbcli.get("max_workers", 4))
 
         if not self.view_model:
             self.view_model = view_name(self.result[0])

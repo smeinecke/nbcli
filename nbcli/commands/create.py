@@ -77,7 +77,9 @@ class Upsert:
             lookup_kwargs[self.res.lookup] = kws
             nba, self.obj = self.args.resolve(alias, kwargs=lookup_kwargs, res=self.res)
             if self.obj:
-                assert len(self.obj) == 1
+                assert len(self.obj) == 1, (
+                    f"'{self.model}' matched {len(self.obj)} objects - refine the lookup value"
+                )
                 self.obj = self.obj[0]
                 self.args = NbArgs(self.netbox, action="patch")
                 if not scope_by_parent:
@@ -117,9 +119,11 @@ class Upsert:
                 self.children.append((key, {}, res))
             elif isinstance(value, (dict, list)):
                 self.children.append((key, value, res))
-            elif rstr in (self.res.alias, self.res.model, self.res.lookup):
+            elif value is None or rstr in (self.res.alias, self.res.model, self.res.lookup):
                 # The key names this object's own model (e.g. 'address' on
                 # ipam.ip_addresses) - the value is data, not a reference.
+                # An explicit null is also literal data (clears the field on
+                # update).
                 self.args.update(key, value)
             else:
                 _, result = self.args.resolve(key, value, res=res)
@@ -164,6 +168,12 @@ class CreateSubCommand(BaseSubCommand):
             data_stream = yaml.safe_load_all(fh.read())
 
         for data in data_stream:
+            if not data:
+                # empty document (e.g. a trailing '---' in the file)
+                continue
+            if not isinstance(data, dict):
+                self.logger.error("Skipping non-mapping YAML document: %s", data)
+                continue
             self.logger.debug(data)
             for key, value in data.items():
                 assert self.netbox.nbcli.rm.get(key.split(":")[0])

@@ -105,7 +105,11 @@ class IpClaimSubCommand(BaseSubCommand):
             if pick not in network:
                 self.logger.critical("Address %s not in prefix %s", pick, network)
                 return
-            if pick in (network.network_address, network.broadcast_address):
+            # /31 links and /32 host routes have no unusable network/broadcast
+            if network.num_addresses > 2 and pick in (
+                network.network_address,
+                network.broadcast_address,
+            ):
                 self.logger.critical("Address %s is not a usable host in %s", pick, network)
                 return
             if int(pick) in used:

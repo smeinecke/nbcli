@@ -115,7 +115,8 @@ class SearchSubCommand(BaseSubCommand):
         self.result_count = 0
         self.results = list()
 
-        max_workers = self.netbox.nbcli.conf.nbcli.get("max_workers", 4)
+        # env var overrides come through auto_cast() as strings
+        max_workers = int(self.netbox.nbcli.conf.nbcli.get("max_workers", 4))
 
         if self.netbox.threading:
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -125,6 +126,7 @@ class SearchSubCommand(BaseSubCommand):
                 self.results.append(self.search_model(obj_type))
 
         self.results = [r for r in self.results if r["records"]]
+        self.result_count = len(self.results)
 
         if self.args.json:
             print(self.json_output())
@@ -149,7 +151,6 @@ class SearchSubCommand(BaseSubCommand):
                 result = rs_limit(model.filter(self.args.searchterm), self.search_limit)
             full_count = model.count(self.args.searchterm)
             if len(result) > 0:
-                self.result_count += 1
                 records = list(result)
                 result_data["records"] = records
                 result_data["result_str"] += f"{obj_type.title()}\n{'=' * len(obj_type)}\n"

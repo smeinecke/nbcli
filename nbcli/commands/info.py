@@ -89,5 +89,8 @@ class InfoSubCommand(BaseSubCommand):
                 if len(nbcli_vars) > 0:
                     print("nbcli environment variables:")
                     for key, val in nbcli_vars.items():
+                        # don't print tokens/keys to the terminal
+                        if any(s in key for s in ("TOKEN", "KEY", "SECRET", "PASSWORD")):
+                            val = "***"
                         print(f"\t{key}: {val}")
                     print()

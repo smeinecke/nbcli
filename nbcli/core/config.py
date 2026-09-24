@@ -69,26 +69,34 @@ class Config:
         """Set attributes from config file or os environment variables."""
         conffile = self.user_files.user_config
         try:
-            user_config = yaml.safe_load(open(str(conffile)))
+            with open(str(conffile)) as fh:
+                user_config = yaml.safe_load(fh) or {}
         except Exception as e:
             logger.critical("Error loading user_config!")
             logger.critical("Run: 'nbcli init' to create a user_config file")
             raise e
 
+        if not isinstance(user_config, dict):
+            raise ValueError(
+                f"user_config must be a YAML mapping, got {type(user_config).__name__}"
+            )
+
         for key, value in user_config.items():
             if isinstance(value, (dict, type(None))):
                 setattr(self, key, value or {})
 
-            # get envars
-            prefix = "NBCLI_{}_".format(key.upper())
-
-            def has_prefix(ek):
-                return ek.find(prefix) == 0
-
-            for envkey in filter(has_prefix, os.environ.keys()):
-                attr = envkey[len(prefix) :].lower()
-                envval = auto_cast(os.environ.get(envkey))
-                getattr(self, key)[attr] = envval
+        # get envars - NBCLI_<SECTION>_<ATTR> overrides or creates sections
+        for envkey in os.environ:
+            if not envkey.startswith("NBCLI_"):
+                continue
+            section, _, attr = envkey[6:].partition("_")
+            if not section or not attr:
+                continue
+            target = getattr(self, section.lower(), None)
+            if not isinstance(target, dict):
+                target = {}
+                setattr(self, section.lower(), target)
+            target[attr.lower()] = auto_cast(os.environ[envkey])
 
 
 def get_session(init=False):
@@ -99,7 +107,9 @@ def get_session(init=False):
     if init:
         return
 
-    url = conf.pynetbox["url"]
+    url = getattr(conf, "pynetbox", {}).get("url")
+    if not url:
+        raise ValueError("No 'url' set in the 'pynetbox' section of user_config.yml")
     del conf.pynetbox["url"]
 
     nb = pynetbox.api(url, **conf.pynetbox)
@@ -124,9 +134,13 @@ def get_session(init=False):
     resstr = (files("nbcli.core") / "resolve_reference.yml").read_text()
     resdict = yaml.safe_load(resstr)
 
+    # 'nbcli' section is optional in user_config.yml - normalize it so
+    # callers can rely on conf.nbcli being a dict
+    nbcli_conf = getattr(conf, "nbcli", None)
+    conf.nbcli = nbcli_conf if isinstance(nbcli_conf, dict) else {}
+
     # load resolve definitions for enabled NetBox plugins
-    nbcli_conf = getattr(conf, "nbcli", {}) or {}
-    plugins = nbcli_conf.get("plugins") or []
+    plugins = conf.nbcli.get("plugins") or []
     if isinstance(plugins, str):
         plugins = [plugins]
 

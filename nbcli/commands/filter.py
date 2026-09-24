@@ -15,18 +15,21 @@ class Filter:
         netbox,
         model,
         logger,
-        args=list(),
+        args=None,
         dl=False,
         list_all=False,
         count=False,
         delete=False,
-        ud=list(),
-        de=list(),
+        ud=None,
+        de=None,
         yes=False,
     ):
         """Initialize Filter object."""
         self.model = app_model_by_loc(netbox, model)
         self.yes = yes
+        args = args or []
+        ud = ud or []
+        de = de or []
 
         nba = NbArgs(netbox)
 
@@ -43,7 +46,8 @@ class Filter:
                 return
             full_count = self.model.count(*nba.args, **nba.kwargs)
 
-        filter_limit = netbox.nbcli.conf.nbcli.get("filter_limit", 50)
+        # env var overrides come through auto_cast() as strings
+        filter_limit = int(netbox.nbcli.conf.nbcli.get("filter_limit", 50))
 
         if filter_limit <= 0:
             filter_limit = 0
@@ -57,7 +61,7 @@ class Filter:
 
         if isinstance(result, RecordSet):
             api_url = result.request.url + "?"
-            for k, v in result.request.filters.items():
+            for k, v in (result.request.filters or {}).items():
                 if isinstance(v, list):
                     api_url += "&".join(str(k) + "=" + str(i) for i in v)
                 else:
@@ -86,10 +90,9 @@ class Filter:
                 ud_nba.proc(*ud)
                 self.update(result, ud_nba)
             elif de:
-                detail = de.pop(0)
                 de_nba = NbArgs(netbox)
-                de_nba.proc(*de)
-                self.detail(result, detail, *de_nba.args, **de_nba.kwargs)
+                de_nba.proc(*de[1:])
+                self.detail(result, de[0], *de_nba.args, **de_nba.kwargs)
             else:
                 self.result = result
         else:

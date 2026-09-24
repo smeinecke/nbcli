@@ -123,6 +123,12 @@ class NbArgs:
         for arg in nba.args:
             nba.update(res.lookup, arg)
 
+        if not nba:
+            # Nothing to filter on - a bare filter() would return every
+            # object and pollute kwargs with all of their reply fields.
+            self.failed = True
+            return nba, []
+
         result = list(ep.filter(**nba.kwargs))
 
         if not result:

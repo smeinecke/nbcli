@@ -69,7 +69,8 @@ class Shell:
         if self.cmd:
             console.runcode(self.cmd)
         elif self.script:
-            console.runcode(open(self.script).read())
+            with open(self.script) as fh:
+                console.runcode(fh.read())
             if self.interact:
                 console.interact(banner="")
         else:
