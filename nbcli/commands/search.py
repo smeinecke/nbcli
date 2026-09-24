@@ -82,7 +82,6 @@ class SearchSubCommand(BaseSubCommand):
             "cable",
             "power_feed",
             "vrf",
-            "aggregate",
             "prefix",
             "address",
             "vlan",

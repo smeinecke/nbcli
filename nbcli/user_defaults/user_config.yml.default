@@ -28,7 +28,6 @@ nbcli:
 #    - cable
 #    - power_feed
 #    - vrf
-#    - aggregate
 #    - prefix
 #    - address
 #    - vlan

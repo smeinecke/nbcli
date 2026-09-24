@@ -88,11 +88,9 @@ nbcli:
 #    - cable
 #    - power_feed
 #    - vrf
-#    - aggregate
 #    - prefix
 #    - address
 #    - vlan
-#    - secret
 #    - tenant
 #    - cluster
 #    - virtual_machine
