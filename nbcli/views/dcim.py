@@ -38,7 +38,8 @@ class DcimDevicesView(BaseView):
         self.add_col("Tenant", self.get_attr("tenant"))
         self.add_col("Site", self.get_attr("site"))
         self.add_col("Rack", self.get_attr("rack"))
-        self.add_col("Role", self.get_attr("device_role"))
+        # 'device_role' was renamed to 'role' in NetBox 4.x
+        self.add_col("Role", self.get_attr("role") or self.get_attr("device_role"))
         self.add_col("Type", self.get_attr("device_type"))
         self.add_col("IP Address", str(self.get_attr("primary_ip")).split("/")[0])
 
@@ -117,7 +118,8 @@ class DcimRUsView(BaseView):
         """Define columns for Rack Units."""
         self.add_col("Name", self.get_attr("name"))
         self.add_col("Device", self.get_attr("device"))
-        self.add_col("Role", self.get_attr("device.device_role"))
+        # 'device_role' was renamed to 'role' in NetBox 4.x
+        self.add_col("Role", self.get_attr("device.role") or self.get_attr("device.device_role"))
         self.add_col("Type", self.get_attr("device.device_type"))
         self.add_col("Serial", self.get_attr("device.serial"))
 

@@ -2,4 +2,8 @@
 
 import importlib.metadata
 
-__version__ = importlib.metadata.version("nbcli")
+try:
+    __version__ = importlib.metadata.version("nbcli")
+except importlib.metadata.PackageNotFoundError:
+    # running from a source checkout without an installed distribution
+    __version__ = "0.0.0+unknown"

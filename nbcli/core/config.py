@@ -44,7 +44,7 @@ class Config:
                 logger.critical("%s exists, but is not a directory", str(udir.absolute()))
                 raise FileExistsError(str(udir.absolute()))
             else:
-                udir.mkdir(exist_ok=True)
+                udir.mkdir(parents=True, exist_ok=True)
 
         # Create user files
         filelist = [

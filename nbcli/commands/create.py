@@ -24,15 +24,12 @@ class Upsert:
         self.data = data
         self.parent = parent
 
-        self.res = res or netbox.nbcli.rm.get(self.model.split(":")[0])
+        self.res = res or netbox.nbcli.rm.get(self.model.split(":")[0].rstrip("^"))
+        assert self.res, f"Unknown model: {self.model}"
         self.ep = app_model_by_loc(self.netbox, self.res.model)
         self.args = None
         self.obj = None
         self.children = list()  # list of tuples (model, data, res)
-
-        assert self.res
-
-        self.obj = None
 
         self.proc_model()
 
@@ -111,7 +108,7 @@ class Upsert:
 
     def proc_data_items(self, key, value, create=False):
         """Process individual key, value pair to determine what to do with it."""
-        rstr = key.split(":")[0]
+        rstr = key.split(":")[0].rstrip("^")
         res = self.res.get(rstr) or self.netbox.nbcli.rm.get(rstr)
 
         if res:
@@ -176,7 +173,7 @@ class CreateSubCommand(BaseSubCommand):
                 continue
             self.logger.debug(data)
             for key, value in data.items():
-                assert self.netbox.nbcli.rm.get(key.split(":")[0]), (
+                assert self.netbox.nbcli.rm.get(key.split(":")[0].rstrip("^")), (
                     f"Unknown model '{key.split(':')[0]}' in {self.args.file}"
                 )
                 Upsert(self.netbox, self.logger, key, value, parent=None)
