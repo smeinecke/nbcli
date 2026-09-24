@@ -205,7 +205,7 @@ class FilterSubCommand(BaseSubCommand):
             help="Update object(s) returned by filter with given kwargs. [WIP]",
         )
 
-        self.parser.add_argument(
+        obj_meth.add_argument(
             "--de",
             "--detail-endpoint",
             nargs="*",

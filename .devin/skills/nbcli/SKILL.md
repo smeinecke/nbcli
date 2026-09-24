@@ -49,7 +49,7 @@ Use these as quick reference, but verify exact options in the docs and `--help` 
 - `nbcli search [obj_type] <searchterm> [--json]` - global search across configured object types. Use `--json` for agent/machine-readable output.
 - `nbcli filter <model> [args...]` - filter by search term, keyword args, auto-resolve (`object:name`), and compound-resolve (`object::object:name`).
   - Output controls: `--json`, `--detail`, `--view VIEW`, `--cols COLS ...`, `--nh`, `--dl`.
-  - Mutating flags: `-D` (delete), `--ud` (update) - these always prompt for confirmation.
+  - Mutating flags: `-D` (delete), `--ud` (update) - prompt for confirmation unless `-y`/`--yes` is passed.
 - `nbcli create <file.yml>` - create/update NetBox objects from YAML; nested objects and aliases are resolved using `nbcli/core/resolve_reference.yml`.
 - `nbcli ipblocks <prefix> [--ongoing N] [--pick N] [--json]` - list free contiguous IP blocks in a prefix; `--pick N` prints the first N free IPs from one contiguous block.
 - `nbcli ipclaim <prefix> <fqdn> [--address IP] [--description TXT] [--status STATUS] [--json]` - claim the next free (or a given) IP in a prefix and set its `dns_name`; with netbox-dns IPAM coupling, managed A/PTR records are created automatically.
@@ -111,7 +111,7 @@ record:pg-dev:
 
 ### Delete a DNS record
 
-Use `nbcli filter` with `-D` (always prompts for confirmation):
+Use `nbcli filter` with `-D` (prompts for confirmation, or `-y`/`--yes` to skip):
 
 ```bash
 nbcli filter record name=pg-dev zone=dev.example.com -D

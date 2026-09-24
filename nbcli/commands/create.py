@@ -113,7 +113,7 @@ class Upsert:
             self.logger.info("Creating %s with data: %s", self.res.alias, str(self.args.kwargs))
             self.obj = self.ep.create(**self.args.kwargs)
 
-    def proc_data_items(self, key, value, create=False):
+    def proc_data_items(self, key, value):
         """Process individual key, value pair to determine what to do with it."""
         rstr = key.split(":")[0].rstrip("^")
         res = self.res.get(rstr) or self.netbox.nbcli.rm.get(rstr)
