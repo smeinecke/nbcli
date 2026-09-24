@@ -210,3 +210,51 @@ def test_run_skips_empty_yaml_documents(tmp_path):
     cmd.run()
 
     cmd.netbox.dcim.regions.create.assert_called_once_with(name="NY", slug="ny")
+
+
+def test_role_field_resolves_to_device_role_id():
+    """'role: X' on a device resolves via the nested dcim.device_roles entry."""
+    nb = _netbox()
+    role = MagicMock(name="role")
+    role.id = 9
+    nb.dcim.device_roles.filter.return_value = [role]
+
+    _upsert(nb, {"device": [{"name": "web-1", "role": "server"}]})
+
+    nb.dcim.device_roles.filter.assert_called_once_with(name="server")
+    nb.dcim.devices.create.assert_called_once_with(name="web-1", role=9)
+
+
+def test_device_role_field_uses_netbox4_name():
+    """'device_role: X' resolves and sends 'role' (NetBox 4.x field name)."""
+    nb = _netbox()
+    role = MagicMock(name="role")
+    role.id = 9
+    nb.dcim.device_roles.filter.return_value = [role]
+
+    _upsert(nb, {"device": [{"name": "web-1", "device_role": "server"}]})
+
+    nb.dcim.device_roles.filter.assert_called_once_with(name="server")
+    nb.dcim.devices.create.assert_called_once_with(name="web-1", role=9)
+
+
+def test_non_mapping_list_item_skipped(caplog):
+    """'region: [foo]' logs an error instead of crashing on .items()."""
+    nb = _netbox()
+
+    with caplog.at_level(logging.ERROR, logger="nbcli.test"):
+        _upsert(nb, {"region": ["foo"]})
+
+    assert "non-mapping" in caplog.text
+    nb.dcim.regions.create.assert_not_called()
+
+
+def test_scalar_model_data_skipped(caplog):
+    """'region: foo' logs an error instead of crashing on .items()."""
+    nb = _netbox()
+
+    with caplog.at_level(logging.ERROR, logger="nbcli.test"):
+        _upsert(nb, {"region": "foo"})
+
+    assert "must be a mapping" in caplog.text
+    nb.dcim.regions.create.assert_not_called()

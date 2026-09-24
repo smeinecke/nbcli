@@ -5,7 +5,7 @@ $ nbcli filter -h
 usage: nbcli filter [-h] [-v] [-q] [--json | --detail] [--view VIEW]
                     [--cols [COLS [COLS ...]]] [--nh] [--dl]
                     [-a | -c | -D | --ud [UD [UD ...]]] [--de [DE [DE ...]]]
-                    [--pre PRE]
+                    [-y] [--pre PRE]
                     model [args [args ...]]
 
 Filter Netbox objects by searchterm and object properties.
@@ -36,6 +36,7 @@ optional arguments:
                         Update object(s) returned by filter with given kwargs. [WIP]
   --de [DE [DE ...]], --detail-endpoint [DE [DE ...]]
                         List results from detail endpoint With optional kwargs. [WIP]
+  -y, --yes             Do not prompt for confirmation on delete/update.
   --pre PRE, --stdin-prefix PRE
                         Prefix to add to stdin args.
 
@@ -194,8 +195,8 @@ nbcli filter interface eth device::rack:1.1
 
 ## Modifying results
 
-Results from the filter can be updated or deleted. You will always be prompted
-to confirm when updating or deleting.
+Results from the filter can be updated or deleted. You will be prompted
+to confirm when updating or deleting unless `--yes` is given.
 
 ### Updating
 

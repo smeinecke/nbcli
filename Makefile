@@ -2,7 +2,7 @@
 
 .PHONY: all format reformat-ruff check fix-ruff fix test integration-test validate \
 	complexity xenon bandit vulture pyright \
-	docker-build docker-build-no-cache docker-run docker-compose-up docker-compose-down docker-test
+	docker-build docker-build-no-cache docker-run docker-test
 
 # Default target: runs validation
 all: validate
@@ -66,13 +66,7 @@ docker-build-no-cache:
 	docker build --no-cache -t nbcli:local .
 
 docker-run:
-	docker run -it nbcli:local
-
-docker-compose-up:
-	docker compose up --build
-
-docker-compose-down:
-	docker compose down
+	docker run -it --rm nbcli:local
 
 docker-test: docker-build
 	@echo "Testing Docker image..."

@@ -39,10 +39,16 @@ dcim.device_roles:
   reply:
     get:
     - [role_id, id]
+    # NetBox 4.x renamed the device/VM field to 'role' (was 'device_role')
+    post:
+    - [role, id]
 
 dcim.platforms:
 
 dcim.devices:
+  # 'role: <name>' resolves via dcim.device_roles (NetBox 4.x field name)
+  dcim.device_roles:
+    alias: role
 
 dcim.console_ports:
 dcim.console_server_ports:
@@ -122,6 +128,10 @@ virtualization.cluster_types:
 virtualization.cluster_groups:
 virtualization.clusters:
 virtualization.virtual_machines:
+  # VMs reference dcim.device_roles as 'role' in NetBox 4.x
+  dcim.device_roles:
+    alias: role
+
 virtualization.interfaces:
   alias: virtual_interface
 

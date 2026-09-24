@@ -9,7 +9,8 @@ from nbcli.core.utils import get_nbcli_dir
 
 def load_extensions():
     """Load user extensions and plugins."""
-    sys.path.append(str(get_nbcli_dir().joinpath("user_extensions")))
+    extdir = get_nbcli_dir().joinpath("user_extensions")
+    sys.path.append(str(extdir))
 
     extensions = list()
 
@@ -17,8 +18,11 @@ def load_extensions():
         if name.startswith("nbcli_"):
             extensions.append(name)
 
-    extensions.append("user_views")
-    extensions.append("user_commands")
+    # only try to import user files when they actually exist - avoids
+    # ModuleNotFoundError noise on every command before 'nbcli init'
+    for name in ("user_views", "user_commands"):
+        if extdir.joinpath(name + ".py").exists():
+            extensions.append(name)
 
     prev_dont_write_bytecode = sys.dont_write_bytecode
     sys.dont_write_bytecode = True

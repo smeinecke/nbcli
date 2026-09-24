@@ -15,7 +15,14 @@ class Upsert:
 
         if isinstance(data, list):
             for d in data:
+                if not isinstance(d, dict):
+                    logger.error("Skipping non-mapping item for '%s': %r", model, d)
+                    continue
                 Upsert(netbox, logger, model, d, res=res, parent=parent)
+            return
+
+        if not isinstance(data, dict):
+            logger.error("'%s' must be a mapping or list of mappings, got %r", model, data)
             return
 
         self.netbox = netbox
