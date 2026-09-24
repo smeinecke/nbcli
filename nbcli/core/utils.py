@@ -40,7 +40,8 @@ class ResMgr:
         # copy so pop() calls below don't mutate the caller's data
         data = copy.deepcopy(data)
         model = key
-        alias = data.pop("alias", model.strip("s").split(".")[-1])
+        # naive singularizer: drop one trailing 's' (e.g. devices -> device)
+        alias = data.pop("alias", model.split(".")[-1].removesuffix("s"))
         lookup = data.pop("lookup", "name")
         reply = data.pop("reply", {})
         if isinstance(reply, list):
@@ -110,7 +111,7 @@ def rend_table(table):
     # get max width for each column
     colw = list()
     for col in range(len(table[0])):
-        colw.append(max([len(row[col]) for row in table]))
+        colw.append(max(len(str(row[col])) for row in table if col < len(row)))
 
     # build template based on max with for each column
     template = ""
@@ -118,7 +119,11 @@ def rend_table(table):
     for w in colw:
         template += "{:<" + str(w + buff) + "s}"
 
-    return "\n".join([template.format(*row).strip() for row in table])
+    return "\n".join(
+        # pad short rows and truncate long ones to the header width
+        template.format(*([str(c) for c in row] + [""] * len(colw))[: len(colw)]).strip()
+        for row in table
+    )
 
 
 def get_nbcli_dir():

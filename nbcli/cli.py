@@ -27,7 +27,7 @@ class CLI:
         )
         self.parser.set_defaults(func=None)
 
-        if "init" not in sys.argv:
+        if sys.argv[1:2] != ["init"]:
             load_extensions()
 
         subparsers = self.parser.add_subparsers(title="Commands", metavar="<command>")

@@ -20,6 +20,7 @@ def load_extensions():
     extensions.append("user_views")
     extensions.append("user_commands")
 
+    prev_dont_write_bytecode = sys.dont_write_bytecode
     sys.dont_write_bytecode = True
 
     for ext in extensions:
@@ -32,4 +33,4 @@ def load_extensions():
             if 0 < logger.level <= 10:
                 raise e
 
-    sys.dont_write_bytecode = True
+    sys.dont_write_bytecode = prev_dont_write_bytecode

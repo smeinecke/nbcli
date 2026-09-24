@@ -49,7 +49,7 @@ class NbArgs:
 
         def proc_kw_string(kw_string):
             """Process string as a keyword argument."""
-            kv = string.split("=")
+            kv = string.split("=", 1)
             if (len(kv) == 2) and (len(kv[0]) > 0) and (len(kv[1]) > 0):
                 self.update(kv[0], kv[1])
             else:
@@ -63,7 +63,7 @@ class NbArgs:
                 for res in resol.split("~"):
                     nba = NbArgs(self._nb, action=self.action)
                     nba.proc(*args)
-                    ret = nba.resolve(*res.split(":"), kwargs=nba.kwargs)
+                    ret = nba.resolve(*res.split(":", 1), kwargs=nba.kwargs)
                     if not ret or not ret[1]:
                         self.failed = True
                         self._logger.warning("Could not resolve '%s'", res)
@@ -82,7 +82,13 @@ class NbArgs:
                 # Process the string as a res_arg
                 proc_res_string(string)
         elif ":" in string:
-            proc_res_string(string)
+            head = string.split(":", 1)[0].split("~", 1)[0]
+            if self._nb.nbcli.rm.get(head):
+                proc_res_string(string)
+            else:
+                # ':'-containing value not starting with a known model
+                # (e.g. an IPv6 address) - treat as a plain argument
+                self.args.append(string)
         elif "=" in string:
             proc_kw_string(string)
         else:

@@ -176,5 +176,7 @@ class CreateSubCommand(BaseSubCommand):
                 continue
             self.logger.debug(data)
             for key, value in data.items():
-                assert self.netbox.nbcli.rm.get(key.split(":")[0])
+                assert self.netbox.nbcli.rm.get(key.split(":")[0]), (
+                    f"Unknown model '{key.split(':')[0]}' in {self.args.file}"
+                )
                 Upsert(self.netbox, self.logger, key, value, parent=None)

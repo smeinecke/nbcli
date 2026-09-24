@@ -64,31 +64,32 @@ class SearchSubCommand(BaseSubCommand):
         - Search all object types for 'server1' and return up to 5 results per type:
           $ nbcli search server1 --limit 5
         """
-        if hasattr(self.netbox.nbcli.conf, "nbcli") and (
-            "search_objects" in self.netbox.nbcli.conf.nbcli.keys()
-        ):
-            self.search_objects = self.netbox.nbcli.conf.nbcli["search_objects"]
-        else:
-            self.search_objects = [
-                "provider",
-                "circuit",
-                "site",
-                "rack",
-                "location",
-                "device_type",
-                "device",
-                "virtual_chassis",
-                "cable",
-                "power_feed",
-                "vrf",
-                "aggregate",
-                "prefix",
-                "address",
-                "vlan",
-                "tenant",
-                "cluster",
-                "virtual_machine",
-            ]
+        configured = self.netbox.nbcli.conf.nbcli.get("search_objects")
+        if isinstance(configured, str):
+            # a scalar in the config means a single model, not chars
+            configured = [configured]
+        if not isinstance(configured, list):
+            configured = None
+        self.search_objects = configured or [
+            "provider",
+            "circuit",
+            "site",
+            "rack",
+            "location",
+            "device_type",
+            "device",
+            "virtual_chassis",
+            "cable",
+            "power_feed",
+            "vrf",
+            "aggregate",
+            "prefix",
+            "address",
+            "vlan",
+            "tenant",
+            "cluster",
+            "virtual_machine",
+        ]
 
         # append safe models from NetBox plugins enabled via 'nbcli.plugins' config
         self.search_objects = list(self.search_objects)

@@ -112,3 +112,28 @@ def test_search_only_uses_safe_plugin_models(tmp_path, monkeypatch):
     assert "record_template" not in searched
     assert "dnssec_policy" not in searched
     assert "dnssec_key_template" not in searched
+
+
+def test_search_objects_scalar_config(tmp_path, monkeypatch):
+    """'search_objects: device' means one model - not a char-by-char list."""
+    config = CONFIG + """nbcli:
+  search_objects: device
+"""
+    nb = _session(tmp_path, monkeypatch, config)
+
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+    command = SearchSubCommand(subparsers)
+    command.args = command.parser.parse_args(["term"])
+    command.netbox = nb
+    command.logger = logging.getLogger("test")
+    searched = []
+
+    def fake_search_model(obj_type):
+        searched.append(obj_type)
+        return {"obj_type": obj_type, "records": [], "result_str": ""}
+
+    command.search_model = fake_search_model
+    command.run()
+
+    assert searched == ["device"]

@@ -180,13 +180,16 @@ class Formatter:
     def _get_view(self):
         # probably not the best way to do this, but first opportunity
         # to get threading and max_workers from conf
-        nb = self.result[0].api
-        self._threading = nb.threading
-        # env var overrides come through auto_cast() as strings
-        self._max_workers = int(nb.nbcli.conf.nbcli.get("max_workers", 4))
+        nb = getattr(self.result[0], "api", None)
+        if nb is not None:
+            self._threading = nb.threading
+            # env var overrides come through auto_cast() as strings
+            self._max_workers = int(nb.nbcli.conf.nbcli.get("max_workers", 4))
 
         if not self.view_model:
-            self.view_model = view_name(self.result[0])
+            # api-less Records (e.g. built by hand in the shell) can't
+            # derive a view from their URL - fall back to BaseView
+            self.view_model = view_name(self.result[0]) if nb else BaseView
 
         if isinstance(self.view_model, str):
             if self.view_model == "BaseView":
