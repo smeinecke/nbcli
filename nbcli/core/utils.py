@@ -1,6 +1,7 @@
 """Define Classes and Functions used throughout nbcli."""
 
 from collections import namedtuple
+import copy
 import json
 import logging
 import os
@@ -36,6 +37,8 @@ class ResMgr:
         self._resl = tuple(self._resl)
 
     def _proc_res_data(self, key, data):
+        # copy so pop() calls below don't mutate the caller's data
+        data = copy.deepcopy(data)
         model = key
         alias = data.pop("alias", model.strip("s").split(".")[-1])
         lookup = data.pop("lookup", "name")

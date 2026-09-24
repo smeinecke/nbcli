@@ -123,6 +123,7 @@ nbcli search record pg-dev
 
 - `nbcli/core/resolve_reference.yml` maps endpoint aliases, lookup fields, and reply fields. `ResMgr` in `nbcli/core/utils.py` reads it; `NbArgs` in `nbcli/commands/tools.py` performs the resolution.
 - For most objects the default lookup is `name`. Notable exceptions include `device_type` (lookup `model`), `prefix`/`address` (lookup `prefix`/`address`), and `cable` (lookup `id`).
+- In `create` YAML, a field that names its own object type (e.g. `address` on an `address`, `prefix` on a `prefix`) is a literal value, not a reference. Nested `model:lookup:` keys scope the child's existence check by the parent's reply fields; a trailing `^` on the key skips that scoping.
 
 ## Development workflow
 

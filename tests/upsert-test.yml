@@ -295,3 +295,26 @@ address:10.0.1.3/24:
 
 address:10.0.1.4/24:
   dns_name: web-proxy-1.example.com
+
+---
+# IP Addresses (list form)
+
+address:
+
+- address: 10.0.0.5/24
+  dns_name: spare-1.example.com
+
+- address: 10.0.0.6/24
+  dns_name: spare-2.example.com
+
+---
+# Prefix with nested addresses
+
+prefix:10.0.2.0/24:
+  status: active
+
+  address:10.0.2.1/24:
+    dns_name: nested-1.example.com
+
+  address:10.0.2.2/24:
+    dns_name: nested-2.example.com

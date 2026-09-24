@@ -96,6 +96,17 @@ ipam.prefixes:
   lookup: prefix
   reply:
   - [prefix, prefix]
+  ipam.ip_addresses:
+    lookup: address
+    reply:
+      # 'parent' (containing prefix) is a valid filter on ip_addresses;
+      # the 'prefix' reply field of the parent is not.
+      get:
+      - [parent, prefix]
+      # ip_addresses has no field referencing its prefix - contribute
+      # nothing to create/update data.
+      post: null
+      patch: null
 
 ipam.ip_addresses:
   alias: address

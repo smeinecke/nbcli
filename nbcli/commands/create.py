@@ -15,7 +15,7 @@ class Upsert:
 
         if isinstance(data, list):
             for d in data:
-                Upsert(netbox, logger, model, d, parent=parent)
+                Upsert(netbox, logger, model, d, res=res, parent=parent)
             return
 
         self.netbox = netbox
@@ -43,31 +43,44 @@ class Upsert:
     def _add_parent_arg(self):
         """If self has a parent object, make sure to apply the correct resolve model."""
         if self.parent:
-            res = self.parent.res.get(self.res.model) or self.parent.res
+            # Match the child entry by alias first, then by model. Matching by
+            # model alone is ambiguous when a parent defines several children
+            # of the same model (e.g. interface_a/interface_b on a cable).
+            res = (
+                self.parent.res.get(self.res.alias)
+                or self.parent.res.get(self.res.model)
+                or self.parent.res
+            )
             self.args.apply_res([self.parent.obj], res)
 
     def proc_model(self):
-        """Process model string (key), and resolve is needed."""
-        gp = True
-        kws = None
-
-        # TODO: fix this ugly workaround for addresses.
+        """Process model string (key), and resolve if needed."""
+        # A trailing '^' on the model key excludes the parent object's reply
+        # args from the lookup (existence check) filter; they are still applied
+        # to the create/update data. Only needed when the parent's reply fields
+        # are not valid filter parameters on the child's endpoint and no
+        # relation-specific child entry exists in resolve_reference.yml.
+        scope_by_parent = True
         if self.model.endswith("^"):
-            gp = False
+            scope_by_parent = False
             self.model = self.model[:-1]
 
         if ":" in self.model:
             self.args = NbArgs(self.netbox)
             alias, kws = self.model.split(":", 1)
-            if gp:
+            if scope_by_parent:
                 self._add_parent_arg()
 
-            nba, self.obj = self.args.resolve(alias, kws, kwargs=self.args.kwargs, res=self.res)
+            # Pass the lookup value verbatim. Running it through NbArgs.proc()
+            # would mangle values containing ':' or '=' (e.g. IPv6 addresses).
+            lookup_kwargs = dict(self.args.kwargs)
+            lookup_kwargs[self.res.lookup] = kws
+            nba, self.obj = self.args.resolve(alias, kwargs=lookup_kwargs, res=self.res)
             if self.obj:
                 assert len(self.obj) == 1
                 self.obj = self.obj[0]
                 self.args = NbArgs(self.netbox, action="patch")
-                if not gp:
+                if not scope_by_parent:
                     self._add_parent_arg()
             else:
                 self.obj = None
@@ -104,8 +117,14 @@ class Upsert:
                 self.children.append((key, {}, res))
             elif isinstance(value, (dict, list)):
                 self.children.append((key, value, res))
+            elif rstr in (self.res.alias, self.res.model, self.res.lookup):
+                # The key names this object's own model (e.g. 'address' on
+                # ipam.ip_addresses) - the value is data, not a reference.
+                self.args.update(key, value)
             else:
-                self.args.resolve(key, value, res=res)
+                _, result = self.args.resolve(key, value, res=res)
+                if not result:
+                    self.logger.warning("Could not resolve '%s: %s'", key, value)
         else:
             self.args.update(key, value)
 
