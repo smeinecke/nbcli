@@ -1,6 +1,7 @@
 """Vulture whitelist for nbcli dynamic attributes and entry points."""
 
 from nbcli.commands.create import CreateSubCommand
+from nbcli.commands.export import ExportSubCommand
 from nbcli.commands.filter import FilterSubCommand
 from nbcli.commands.info import InfoSubCommand
 from nbcli.commands.init import InitSubCommand
@@ -32,6 +33,7 @@ from nbcli.views.tenancy import TenancyTenantGroupsView, TenancyTenantsView
 
 _ = (
     CreateSubCommand,
+    ExportSubCommand,
     FilterSubCommand,
     InfoSubCommand,
     InitSubCommand,

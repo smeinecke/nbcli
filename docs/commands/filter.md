@@ -108,6 +108,21 @@ form of `key=value`.
 nbcli filter device serial=123456
 ```
 
+!!! warning
+    NetBox **silently discards** filter parameters that an endpoint does not
+    accept - no error is returned. `nbcli filter address device_role=x` does
+    not fail; it returns *every* IP address because `device_role` is not a
+    valid `ipam.ip_addresses` filter. On large datasets this can also cause
+    gateway timeouts.
+
+    Check the valid filter fields for an endpoint in your NetBox instance's
+    API docs (`https://your.netbox.url/api/docs/`) when results look wrong.
+
+    Watch for similarly-named but distinct endpoints - e.g. device interfaces
+    are `interface` (`dcim.interfaces`) while VM interfaces are
+    `virtual_interface` (`virtualization.interfaces`) and accept
+    `virtual_machine=`; `interface` does not.
+
 !!! note
     Keyword arguments are passed to the given REST API endpoint via
     [pynetbox](https://pynetbox.readthedocs.io/en/latest/endpoint.html#pynetbox.core.endpoint.Endpoint.filter)
