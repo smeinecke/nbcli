@@ -74,7 +74,11 @@ class BaseView:
     def table_view(self):
         """Define headers and values for table view of object."""
         self.add_col("ID", self.get_attr("id"))
-        self.add_col(view_name(self.obj).replace("View", ""), str(self.obj))
+        try:
+            name = view_name(self.obj).replace("View", "")
+        except Exception:
+            name = type(self.obj).__name__
+        self.add_col(name, str(self.obj))
 
     def detail_view(self):
         """Define detail view of object."""

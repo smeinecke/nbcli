@@ -32,7 +32,7 @@ class ExampleSubCommand(BaseSubCommand):
                          )
 
     # view_options is optional.
-    # If True it will add --view, --view-model, --cols, and --nh arguments
+    # If True it will add --json, --detail, --view, --cols, and --nh arguments
     # to the command ArgumentParser and add a pre-configured nbprint() method
     # available in run()
 

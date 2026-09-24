@@ -1,6 +1,6 @@
 """Sub command to launch python shell preloaded with pynetbox objects."""
 
-import importlib
+import importlib.util
 import sys
 import pynetbox
 from pynetbox.core.endpoint import Endpoint
