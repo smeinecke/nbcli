@@ -3,10 +3,10 @@
 ```
 $ nbcli filter -h
 usage: nbcli filter [-h] [-v] [-q] [--json | --detail] [--view VIEW]
-                    [--cols [COLS [COLS ...]]] [--nh] [--dl]
-                    [-a | -c | -D | --ud [UD [UD ...]]] [--de [DE [DE ...]]]
-                    [-y] [--pre PRE]
-                    model [args [args ...]]
+                    [--cols [COLS ...]] [--sort FIELD [FIELD ...]]
+                    [--delim SEP] [--nh] [--dl] [-a | -c | -D |
+                    --ud [UD ...] | --de [DE ...]] [-y] [--pre PRE]
+                    model [args ...]
 
 Filter Netbox objects by searchterm and object properties.
 
@@ -17,27 +17,29 @@ positional arguments:
   model                 NetBox model.
   args                  Argument(s) to filter results.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -v, --verbose         Show more logging messages
   -q, --quiet           Show fewer logging messages
   --json                Display results as json string.
   --detail              Display more detailed info for results.
   --view VIEW           View model to use
-  --cols [COLS [COLS ...]]
-                        Custom columns for table output.
+  --cols [COLS ...]     Custom columns for table output. Also limits the fields of each object in --json output.
+  --sort FIELD [FIELD ...]
+                        Sort results by attribute path(s) (e.g. 'address', 'vlan.vid'). IP addresses sort numerically; prefix FIELD with '-' for descending (use the --sort=-FIELD form).
+  --delim SEP           Separate columns with SEP instead of a padded table (e.g. '|'; escapes like '\t' are decoded).
   --nh, --no-header     Disable header row in results
   --dl, --disable-limit
                         Disable limiting number of results returned.
   -a, --all             List all object from endpoint.
   -c, --count           Return the count of objects in filter.
   -D, --delete          Delete Object(s) returned by filter. [WIP]
-  --ud [UD [UD ...]], --update [UD [UD ...]]
+  --ud, --update [UD ...]
                         Update object(s) returned by filter with given kwargs. [WIP]
-  --de [DE [DE ...]], --detail-endpoint [DE [DE ...]]
+  --de, --detail-endpoint [DE ...]
                         List results from detail endpoint With optional kwargs. [WIP]
   -y, --yes             Do not prompt for confirmation on delete/update.
-  --pre PRE, --stdin-prefix PRE
+  --pre, --stdin-prefix PRE
                         Prefix to add to stdin args.
 
 Filter Netbox objects by a searchterm and object properties.
@@ -262,6 +264,9 @@ command are displayed.
   --view VIEW           View model to use
   --cols [COLS [COLS ...]]
                         Custom columns for table output.
+  --sort FIELD [FIELD ...]
+                        Sort results by attribute path(s)
+  --delim SEP           Separate columns with SEP instead of a padded table
   --nh, --no-header     Disable header row in results
 ```
 
@@ -270,6 +275,15 @@ command are displayed.
 Display results as json string. Output should be similar (but may not be
 exactly the same) as the contents from the `results` field when accessing the
 Netbox API directly.
+
+When `--cols` is given, each object in the json array only contains the
+requested attributes (attribute paths like `vlan.vid` and `tags:0` work here
+too). Missing attributes are emitted as `null`.
+
+```
+$ nbcli filter address '10.30.80.' --json --cols address dns_name
+[{"address": "10.30.80.1/25", "dns_name": "opn-k8s-prod-01.example.com"}, ...]
+```
 
 ### --detail  
 
@@ -358,6 +372,40 @@ web-2        -         -
 web-3        -         -
 web-proxy-1  -         -
 ```
+
+### --sort
+
+Sort results by one or more attribute paths (the same paths `--cols`
+accepts). IP addresses and prefixes sort numerically (including IPv6),
+numbers numerically, everything else alphabetically; missing values sort
+last. Prefix a field with `-` for descending order - because of argparse
+rules it has to be written as `--sort=-field`.
+
+```
+$ nbcli filter address '10.30.80.' --sort address
+$ nbcli filter device tenant:ENCOM --sort rack position
+$ nbcli filter address '10.30.80.' --sort=-address
+```
+
+!!! tip
+    Alternatively, an `ordering=<field>` keyword argument is passed through to
+    the REST API for server-side sorting - this also sorts *before* the
+    `filter_limit` is applied, whereas `--sort` sorts the returned results.
+
+### --delim
+
+Join columns with the given separator instead of rendering a padded table -
+useful when piping to `cut`, `awk`, or `xargs`. With `--cols`, missing values
+are rendered as empty fields; escape sequences like `\t` are decoded.
+
+```
+$ nbcli filter address '10.30.80.' --cols address dns_name role description --delim '|' --nh --sort address
+10.30.80.1/25|opn-k8s-prod-01.example.com||K8s Network Gateway
+10.30.80.4/25|jumphost-k8s-prod.example.com|VIP|
+```
+
+Without `--cols` the default view columns are used and missing values render
+as `-` like in the table view.
 
 ### --nh, --no-header
 

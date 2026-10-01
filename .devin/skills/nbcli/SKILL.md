@@ -48,7 +48,8 @@ Use these as quick reference, but verify exact options in the docs and `--help` 
 - `nbcli info [--detailed | --models [model]]` - show version/model/endpoint info.
 - `nbcli search [obj_type] <searchterm> [--json]` - global search across configured object types. Use `--json` for agent/machine-readable output.
 - `nbcli filter <model> [args...]` - filter by search term, keyword args, auto-resolve (`object:name`), and compound-resolve (`object::object:name`).
-  - Output controls: `--json`, `--detail`, `--view VIEW`, `--cols COLS ...`, `--nh`, `--dl`.
+  - Output controls: `--json`, `--detail`, `--view VIEW`, `--cols COLS ...`, `--sort FIELD ...`, `--delim SEP`, `--nh`, `--dl`.
+  - `--cols` also trims `--json` output to the listed attribute paths; `--sort` orders IPs/numerics numerically (`--sort=-FIELD` for descending); `--delim SEP` joins columns (e.g. `|`, `\t`) for `cut`/`awk`/`xargs` pipelines. Never post-process `--json` with python/jq just to pick fields or sort - use `--cols` and `--sort` instead.
   - Mutating flags: `-D` (delete), `--ud` (update) - prompt for confirmation unless `-y`/`--yes` is passed.
 - `nbcli create <file.yml>` - create/update NetBox objects from YAML; nested objects and aliases are resolved using `nbcli/core/resolve_reference.yml`.
 - `nbcli ipblocks <prefix> [--ongoing N] [--pick N] [--json]` - list free contiguous IP blocks in a prefix; `--pick N` prints the first N free IPs from one contiguous block.
@@ -136,6 +137,12 @@ nbcli search record pg-dev
 - Built-in views are in `nbcli/views/`. The default view for a record is derived by `view_name()` in `nbcli/core/utils.py`.
 - Custom views subclass `BaseView` in `nbcli/views/tools.py` and are auto-loaded from `user_views.py`.
 - `nbprint()` and `Formatter` in `nbcli/views/tools.py` produce table/JSON/detail output. Use `nbprint(result, cols=[...])` to pick columns; attribute paths like `device_type.manufacturer` are supported, plus `tags:0` (list index) and `custom_fields:env` (dict key).
+- Pipe-friendly field extraction and IP-aware sorting are native - no `jq`/python post-processing needed:
+
+  ```bash
+  nbcli filter address "10.30.80." --cols address dns_name role description --delim '|' --nh --sort address
+  nbcli filter address "10.30.80.15" --json --cols address dns_name --sort address
+  ```
 
 ## Auto-resolution and references
 

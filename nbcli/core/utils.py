@@ -2,6 +2,7 @@
 
 from collections import namedtuple
 import copy
+from ipaddress import ip_interface
 import json
 import logging
 import os
@@ -233,3 +234,46 @@ def getter(obj, string):
         except Exception:
             return None
     return obj
+
+
+def smart_key(value):
+    """Build a sort key ordering IPs (v4 < v6), then numbers, then strings.
+
+    Missing/empty values sort last. Choice-field dicts (or nested records
+    exposing 'label'/'value' keys) sort by their label.
+    """
+    if value is None:
+        return (3, "")
+    get = getattr(value, "get", None)
+    if callable(get) and not isinstance(value, (str, dict)):
+        value = value.get("label") or value.get("value") or value
+    elif isinstance(value, dict):
+        value = value.get("label") or value.get("value") or str(value)
+    s = str(value).strip()
+    if not s:
+        return (3, "")
+    try:
+        ip = ip_interface(s).ip
+        return (0, ip.version, int(ip))
+    except ValueError:
+        pass
+    try:
+        return (1, float(s))
+    except ValueError:
+        return (2, s.casefold())
+
+
+def sort_records(records, fields):
+    """Sort records by the given field specs, in place, and return the list.
+
+    Each spec is an attribute path as accepted by ``getter`` (e.g. 'address',
+    'vlan.vid', 'tags:0'). A leading '-' sorts that field descending. Multiple
+    fields are applied left to right as primary, secondary, ... sort keys.
+    """
+    for spec in reversed(fields or []):
+        if not spec:
+            continue
+        reverse = spec.startswith("-")
+        field = spec[1:] if reverse else spec
+        records.sort(key=lambda r: smart_key(getter(r, field)), reverse=reverse)
+    return records

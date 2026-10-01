@@ -36,7 +36,28 @@ def get_view_parser():
 
     view_parser.add_argument("--view", type=str, help="View model to use")
 
-    view_parser.add_argument("--cols", nargs="*", help="Custom columns for table output.")
+    view_parser.add_argument(
+        "--cols",
+        nargs="*",
+        help="Custom columns for table output. Also limits the fields "
+        "of each object in --json output.",
+    )
+
+    view_parser.add_argument(
+        "--sort",
+        nargs="+",
+        metavar="FIELD",
+        help="Sort results by attribute path(s) (e.g. 'address', 'vlan.vid'). "
+        "IP addresses sort numerically; prefix FIELD with '-' for descending "
+        "(use the --sort=-FIELD form).",
+    )
+
+    view_parser.add_argument(
+        "--delim",
+        metavar="SEP",
+        help="Separate columns with SEP instead of a padded table "
+        "(e.g. '|'; escapes like '\\t' are decoded).",
+    )
 
     view_parser.add_argument(
         "--nh", "--no-header", action="store_true", help="Disable header row in results"
@@ -93,12 +114,17 @@ class BaseSubCommand:
         try:
             self.netbox = get_session()
             if self.view_options:
+                sep = self.args.delim
+                if sep is not None and sep.isascii():
+                    sep = sep.encode().decode("unicode_escape")
                 nbopts = dict(
                     json_view=self.args.json,
                     detail_view=self.args.detail,
                     view_model=self.args.view,
                     cols=self.args.cols,
                     disable_header=self.args.nh,
+                    sort=self.args.sort,
+                    sep=sep,
                 )
 
                 self.nbprint = functools.partial(nbprint, **nbopts)

@@ -4,7 +4,23 @@ import json
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from pynetbox.core.response import Record, RecordSet
-from nbcli.core.utils import is_list_of_records, view_name, rend_table
+from nbcli.core.utils import getter, is_list_of_records, sort_records, view_name, rend_table
+
+
+def _jsonable(value):
+    """Convert a getter() result into a JSON-serializable value."""
+    if isinstance(value, Record):
+        return dict(value)
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(v) for v in value]
+    return value
+
+
+def _delim_cell(value):
+    """Convert a getter() result into a cell string for delimited output."""
+    if value is None:
+        return ""
+    return str(value)
 
 
 class BaseView:
@@ -119,6 +135,8 @@ class Formatter:
         view_model=None,
         cols=list(),
         disable_header=False,
+        sort=None,
+        sep=None,
     ):
         """Initialize Display instance."""
         if isinstance(result, RecordSet):
@@ -129,6 +147,8 @@ class Formatter:
         self.view_model = view_model
         self.cols = cols
         self.disable_header = disable_header
+        self.sort = sort
+        self.sep = sep
         self._string = ""
         self._threading = False
         self._max_workers = 4
@@ -163,6 +183,14 @@ class Formatter:
 
         self._string = ("\n\n" + ("#" * 80) + "\n\n").join(display)
 
+    def _sort_result(self):
+        if not self.sort:
+            return
+        if isinstance(self.result, Record):
+            self.result = [self.result]
+        if is_list_of_records(self.result):
+            self.result = sort_records(self.result, self.sort)
+
     def _get_json(self):
         def build(data):
             if isinstance(data, Record):
@@ -171,9 +199,36 @@ class Formatter:
                 data = [build(d) for d in data]
             return data
 
-        self._string = json.dumps(build(self.result))
+        self._sort_result()
+        result = self.result
+        if self.cols:
+            if isinstance(result, Record):
+                result = [result]
+            if is_list_of_records(result):
+                result = [
+                    {str(col): _jsonable(getter(record, col)) for col in self.cols}
+                    for record in result
+                ]
+        self._string = json.dumps(build(result))
+
+    def _get_delim(self):
+        if self.cols:
+            display = [[str(col) for col in self.cols]]
+            for entry in self.result:
+                display.append([_delim_cell(getter(entry, col)) for col in self.cols])
+        else:
+            display = self._build_table()
+
+        if self.disable_header:
+            display.pop(0)
+
+        self._string = "\n".join(self.sep.join(str(c) for c in row) for row in display)
 
     def _get_table(self):
+        if self.sep is not None:
+            self._get_delim()
+            return
+
         display = self._build_table()
         assert len(display) > 1
         if self.disable_header:
@@ -227,6 +282,7 @@ class Formatter:
             self.result = [self.result]
 
         if isinstance(self.result, list) and is_list_of_records(self.result):
+            self._sort_result()
             self._get_view()
             if self.detail_view:
                 self._get_detail()
@@ -245,6 +301,8 @@ def nbprint(
     view_model=None,
     cols=list(),
     disable_header=False,
+    sort=None,
+    sep=None,
     string=False,
 ):
     """Print result from pynetbox."""
@@ -255,6 +313,8 @@ def nbprint(
         view_model=view_model,
         cols=cols,
         disable_header=disable_header,
+        sort=sort,
+        sep=sep,
     )
     if string:
         return formatted_result.string
